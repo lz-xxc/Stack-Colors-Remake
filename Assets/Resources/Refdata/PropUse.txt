@@ -1,0 +1,5 @@
+﻿道具类型	消耗数量	购买数量	解锁关卡	描述
+PropType	CostNum	AddNum	UnlockLv	Des
+Hint	120	3	2	Get 3 hints
+Clear	100	1	3	Get Clear Item
+Magnet	80	1	4	Magnet All Color

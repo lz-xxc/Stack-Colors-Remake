@@ -1,0 +1,6 @@
+﻿道具编号	道具枚举	道具名称	道具类型	icon
+ID	PropType	Name	PropGroup	Icon
+1001	Gold	Gold	Coin	coin_1
+2001	Hint	Hint	Item	hint
+2002	Clear	Clear	Item	clear
+2003	Magnet	Magnet	Item	magnet

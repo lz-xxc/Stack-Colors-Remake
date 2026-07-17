@@ -1,0 +1,6 @@
+商品编号	解锁类型	金币价格/成就ID	商品描述	商品路径
+ItemId	UnLockType	Param	Desc	Name
+100	None	0	100	Player1
+200	Gold	500	200	Player2
+300	Gold	200	300	Player3
+400	Gold	300	400	Player4
