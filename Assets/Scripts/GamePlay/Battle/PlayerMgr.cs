@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.EventSystems;
 
 enum E_PlayerState {
     Pickup,
@@ -291,7 +292,8 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     }
 
     public void OnCtrlDrag(object[] _obj) {
-
+        PointerEventData data = (PointerEventData)_obj[0];
+        Vector3 point = data.position;
     }
 
 
