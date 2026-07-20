@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraMgr : SingletonMonoBehavior<CameraMgr> {
     private Camera mainCamera;
-    private float moveSpeed = 17;
+    private float moveSpeed = 20;
     private Camera MainCamera {
         get {
             if (mainCamera == null)
@@ -35,6 +35,9 @@ public class CameraMgr : SingletonMonoBehavior<CameraMgr> {
         if (MainCamera.transform.position.z >= PickUpMgr.Instance.largestRatePosZ + pivot.z) {
             moveSpeed = 0;
             return true;
+        }
+        else {
+            moveSpeed = 17;
         }
         return false;
     }

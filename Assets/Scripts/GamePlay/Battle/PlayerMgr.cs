@@ -45,12 +45,12 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     private float finalForce = 1f;
     float targetPosZ = 1000;
     float currentFinalTime = 0;
-    float finalTime = 3;
+    float finalTime = 2.5f;
     private bool isForce = false;
     //到加速地段
     private bool isAtSpeedupRoad = false;
     private float maxSpeedup = 20;//最大速度
-    private float minSpeedup = 4;//最小速度
+    private float minSpeedup = 6;//最小速度
     private float clickAddSpeed = 3;//点击增加速度
     private float reduceSpeedup = 2;//加速通道衰减速度
     private float finishReduceSpeed = 0.01f;//完成通道衰减速度
@@ -336,14 +336,14 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
         // ✅ 物理参数（优化后）
         rb.useGravity = true;
-        rb.mass = 2.5f;           // 减轻质量，更容易被推动
+        rb.mass = 2f;           // 减轻质量，更容易被推动
         rb.drag = 0.15f;                              // 减小空气阻力，滑行更远
         rb.angularDrag = 0.1f;                        // 减小角阻力，旋转更持久
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.constraints = RigidbodyConstraints.None;
 
         // ✅ 向前的力（底部大，顶部小）- 优化力度分布
-        float forwardForce = finalForce + (1.5f / (index + 1));  // 减小基础力，增大顶部补偿
+        float forwardForce = finalForce + (2f / (index + 1));  // 减小基础力，增大顶部补偿
         rb.AddForce(Vector3.forward * forwardForce, ForceMode.Impulse);
     }
 }
