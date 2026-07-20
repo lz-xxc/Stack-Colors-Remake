@@ -6,11 +6,12 @@ using UnityEngine.UI;
 
 public class BattleWindow : BaseWindowWrapper<BattleWindow> {
     private Text txtScore;
+    private Text txtGold;
     private EventTrigger imgCtrl;
     private Image energyFill;
     private Image processFill;
     private Image forceFill;
-    public Camera uiCamera;
+    private Camera uiCamera;
     private GameObject ForceBar;
 
     private GameObject txtGetScorePref;
@@ -18,6 +19,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
 
     protected override void InitCtrl() {
         txtScore = gameObject.GetChildControl<Text>("txtScore");
+        txtGold = gameObject.GetChildControl<Text>("txtGold");
         energyFill = gameObject.GetChildControl<Image>("EnergyBar/Fill");
         processFill = gameObject.GetChildControl<Image>("ProcessBar/Fill");
         forceFill = gameObject.GetChildControl<Image>("ForceBar/Fill");
@@ -37,6 +39,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
     }
 
     protected override void OnOpen() {
+        txtGold.text = CurrencyMgr.Instance.Gold.ToString();
         HideForceBar();
         EnergyMgr.Instance.Energy = 0;
         ScoreMgr.Instance.Score = 0;

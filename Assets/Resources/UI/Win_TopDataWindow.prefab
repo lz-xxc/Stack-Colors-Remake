@@ -66,6 +66,8 @@ MonoBehaviour:
   openAnimType: 0
   closeAnimType: 0
   animTime: 0.3
+  openEase: 1
+  closeEase: 1
   closeOnEmpty: 0
   mask: 0
   maskAlpha: 0.38
@@ -403,7 +405,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 1234
+  m_Text: 42454
 --- !u!1 &4236757715566253946
 GameObject:
   m_ObjectHideFlags: 0
