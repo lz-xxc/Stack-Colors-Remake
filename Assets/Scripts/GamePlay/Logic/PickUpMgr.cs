@@ -27,12 +27,20 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     private int heighrPickupEnergy = 4;
     private int lowPickupEnergy = 2;
 
-
+    //拾取物生成x轴
+    private float leftX = -6;
+    private float midLeftX = -3;
+    private float midX = 0;
+    private float midRightX = 3;
+    private float rightX = 6;
+    //拾取物生成位置列表
+    private float[] createPosX;
 
     public bool isEnergyMax = false;
 
-    private float[] createPosX;
-    private int[] laneSequence = new int[] { 0, 1, 2, 2, 1, 0 };
+    private int[] laneSequence = new int[] { 1, 2, 3, 3, 2, 1 };
+
+    public float largestRatePosZ = 1000;
 
     private List<GameObject> activePickUps = new List<GameObject>();
 
@@ -40,11 +48,16 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         InitMsg();
 
         pickUpTran = pickUpTran == null ? new GameObject("pickUpTran") : pickUpTran;
-        createPosX = PlayerMgr.Instance.GetAllLaneX();
+        createPosX = new float[] { leftX, midLeftX, midX, midRightX, rightX };
         SpaceOfZ = ((10 - 7) / 8f);//（（地面长度-拾取物总长度） / 间隙个数）
     }
 
     public void Clear() {
+        lastPickupObj = null;
+        lastPickupPosY = 0;
+        pickUpPosY = 0;
+        pickUpCount = 0;
+        largestRatePosZ = 1000;
         foreach (GameObject pickup in activePickUps) {
             ObjectPool.Instance.Recycle(pickup);
         }
@@ -68,10 +81,10 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         int colorIndex;
         for (int i = 0; i < MaxPickUpRow; i++) {
             float posZ = (roadPosZ - 4.5f + SpaceOfZ) + ((SpaceOfZ + 1) * i);//初始位置：（路面中心位置 - 路面中心到边缘减去拾取物宽度一半 + 间隔长度） + 拾取物中心间隔长度：（（间隔长度 + 拾取物长度） * 第几行拾取物）
-            for (int j = 0; j < 3; j++) {
+            for (int j = 1; j < createPosX.Length - 1; j++) {
                 colorIndex = (j + addColorIndex + 1) % 3;
                 Vector3 pos = new Vector3(createPosX[j], PickUpPosY, posZ);
-                GameObject Pickup = CreatePickup(pos, smallPickupHeight, roadId, colorIndex, lowPickupScore, lowPickupEnergy);
+                GameObject Pickup = CreatePickup(pos, smallPickupHeight, roadId, colorIndex, lowPickupScore, lowPickupEnergy, 1);
                 activePickUps.Add(Pickup);
             }
         }
@@ -82,9 +95,9 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     public void CreateAllLanes(float roadPosZ, int roadId, int colorIndex) {
         for (int i = 0; i < MaxPickUpRow; i++) {
             float posZ = (roadPosZ - 4.5f + SpaceOfZ) + ((SpaceOfZ + 1) * i);//初始位置：（路面中心位置 - 路面中心到边缘减去拾取物宽度一半 + 间隔长度） + 拾取物中心间隔长度：（（间隔长度 + 拾取物长度） * 第几行拾取物）
-            for (int j = 0; j < 3; j++) {
+            for (int j = 1; j < createPosX.Length - 1; j++) {
                 Vector3 pos = new Vector3(createPosX[j], PickUpPosY, posZ);
-                GameObject Pickup = CreatePickup(pos, smallPickupHeight, roadId, colorIndex, lowPickupScore, lowPickupEnergy);
+                GameObject Pickup = CreatePickup(pos, smallPickupHeight, roadId, colorIndex, lowPickupScore, lowPickupEnergy, 1);
                 activePickUps.Add(Pickup);
             }
         }
@@ -97,15 +110,15 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         for (int i = 0; i < laneSequence.Length; i++) {
             float posZ = (roadPosZ - 4.5f + SpaceOfZ) + ((SpaceOfZ + 1) * i * 2);
             Vector3 pos = new Vector3(createPosX[laneSequence[i]], PickUpPosY * 5, posZ);
-            GameObject pickup = CreatePickup(pos, bigPickupHeight, roadId, colorIndex, heightPickupScore, heighrPickupEnergy);
+            GameObject pickup = CreatePickup(pos, bigPickupHeight, roadId, colorIndex, heightPickupScore, heighrPickupEnergy, 2);
             activePickUps.Add(pickup);
         }
     }
 
-    public GameObject CreatePickup(Vector3 pos, float height, int roadId, int colorIndex, int score, int energy) {
+    public GameObject CreatePickup(Vector3 pos, float height, int roadId, int colorIndex, int score, int energy, int type) {
         GameObject Pickup = ObjectPool.Instance.Get("PickUp", pickUpTran.transform, false);
         Send.SendMsg(SendType.PickupColorChange, Pickup, colorIndex);
-        Pickup.GetComponent<PickUpView>().SetData(pos, height, roadId, colorIndex, score, energy);
+        Pickup.GetComponent<PickUpView>().SetData(pos, height, roadId, colorIndex, score, energy, type);
         return Pickup;
     }
 
@@ -139,7 +152,8 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
                 }
             }
             else {
-                GameStateMgr.Instance.SwitchState(GameState.GameOver);
+                if (GameStateMgr.Instance.curState != GameState.GameOver)
+                    GameStateMgr.Instance.SwitchState(GameState.GameOver);
                 BattleMgr.Instance.state = BattleState.GameOver;
             }
             return;
@@ -147,7 +161,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
 
         if (pickUpCount == 0) {
             keepPickUp = PlayerMgr.Instance.keepPickUpTran;
-            pickUpPosY = pickUpView.height + pickupSpace;
+            pickUpPosY += pickUpView.height + pickupSpace;
             obj.transform.position = keepPickUp.position + Vector3.up * pickUpPosY;
         }
         else {

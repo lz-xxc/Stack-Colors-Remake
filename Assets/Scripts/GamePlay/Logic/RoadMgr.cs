@@ -8,32 +8,34 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
     private int roadLogic = 0;
     private int rateRoadLogic = 0;
     private int maxRoad = 8;
-    public int roadLength { get; private set; } = 10;
+    public float roadLength { get; private set; } = 10;
+    public float roadWidth = 16;
     private int rateRoadLength = 10;
     private float deltaRecycleTime = 0.5f;
 
     private Vector3 nextRoadPos = Vector3.zero;
 
     private List<GameObject> activeRoad = new List<GameObject>();
+    private List<GameObject> activeRateRoad = new List<GameObject>();
 
     // ===== 地图配置（只初始化一次）=====
-    private int converterPos1 = 7;   // 第2个全路段后
-    private int converterPos2 = 21;  // 中间第2个顺序后
+    private int converterPos1 = 8;   // 第2个全路段后
+    private int converterPos2 = 22;  // 中间第2个顺序后
 
     private List<int> allLanePositions = new List<int> {
         // 前面5个全路段（间隔1格）
-        3, 5, 9, 11, 13,
+        4, 6, 10, 12, 14,
         // 结尾3个全路段（间隔1格）
-        25, 27, 29 ,31,33
+        27, 29, 31 ,33,35
     };
 
     private List<int> lanePositions = new List<int> {
-        16, 19, 23  // 3个顺序（间隔2格）
+        16, 19, 24  // 3个顺序（间隔2格）
     };
 
-    public int speedupRoadStart { get; private set; } = 35;
+    public int speedupRoadStart { get; private set; } = 37;
 
-    public int finishRoadStart { get; private set; } = 40;
+    public int finishRoadStart { get; private set; } = 42;
 
     private int rateRoadCount = 40;
 
@@ -46,8 +48,14 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
     public void Clear() {
         foreach (GameObject road in activeRoad) {
+            road.GetComponent<Renderer>().material.color = Color.black;
             ObjectPool.Instance.Recycle(road);
         }
+        foreach (GameObject road in activeRateRoad) {
+            ObjectPool.Instance.Recycle(road);
+        }
+        activeRoad.Clear();
+        activeRateRoad.Clear();
     }
 
     public void InitMsg() {
@@ -58,6 +66,7 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
     public void StartBattle() {
         roadLogic = 0;
+        rateRoadLogic = 0;
         nextRoadPos = Vector3.zero;
         while (roadLogic < maxRoad) {
             CreateRoad();
@@ -95,7 +104,7 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
                         roadView = rateRoad.AddComponent<RateRoad>();
                     roadView.SetData(i, nextRoadPos);
                     nextRoadPos += new Vector3(0, 0, rateRoadLength);  // 倍率路段用 rateRoadLength
-                    activeRoad.Add(rateRoad);
+                    activeRateRoad.Add(rateRoad);
                 }
             }
         }

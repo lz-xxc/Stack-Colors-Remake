@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 /// <summary>
@@ -10,6 +11,8 @@ public class BattleMgr : Singleton<BattleMgr> {
 
     public BattleState state = BattleState.Wait;
 
+    private List<GameObject> activeTexts = new List<GameObject>();
+
     private float floatDuration = 1;
     private float floatDistance = 100;
 
@@ -18,14 +21,14 @@ public class BattleMgr : Singleton<BattleMgr> {
     }
 
     public void Clear() {
-        ClearMsg();
+        DOTween.KillAll();
+        ClearAllFloatingTexts();
     }
 
     public void InitMsg() {
     }
 
     public void ClearMsg() {
-        PickUpMgr.Instance.ClearMsg();
     }
 
     public void StartBattle() {
@@ -35,6 +38,10 @@ public class BattleMgr : Singleton<BattleMgr> {
     }
 
     public void ShowFloatingText(Vector3 worldPosition, int score) {
+        if (state == BattleState.GameOver || state == BattleState.Wait) {
+            return;
+        }
+
         // 世界坐标转屏幕坐标
         Vector3 screenPos = Camera.main.WorldToScreenPoint(worldPosition);
         Canvas canvas = BattleWindow.Instance.transform.GetComponentInParent<Canvas>();
@@ -52,6 +59,7 @@ public class BattleMgr : Singleton<BattleMgr> {
         // 从对象池获取
         GameObject go = ObjectPool.Instance.Get("txtAddScore", BattleWindow.Instance.floatingTextTran, false);
 
+
         // 设置位置
         RectTransform rect = go.GetComponent<RectTransform>();
         rect.anchoredPosition = uiPos;
@@ -59,6 +67,21 @@ public class BattleMgr : Singleton<BattleMgr> {
         // 显示动画
         GetScoreText floatingText = go.GetComponent<GetScoreText>();
         floatingText.Show($"+{score}", floatDuration, floatDistance);
+        activeTexts.Add(go);
+    }
+
+    public void RemoveActiveTxt(GameObject obj) {
+        activeTexts.Remove(obj);
+    }
+
+    public void ClearAllFloatingTexts() {
+        foreach (var go in activeTexts) {
+            if (go != null) {
+                // 回收
+                ObjectPool.Instance.Recycle(go, false);
+            }
+        }
+        activeTexts.Clear();
     }
 }
 

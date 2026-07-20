@@ -15,6 +15,13 @@ public class GetScoreText : MonoBehaviour {
     }
 
     public void Show(string text, float duration, float distance) {
+
+        // ✅ 组件检查
+        if (txtGetScore == null || rectTransform == null) {
+            Debug.LogWarning($"⚠️ {gameObject.name} 组件缺失");
+            return;
+        }
+
         txtGetScore.text = text;
         //重置位置
         startPos = rectTransform.anchoredPosition;
@@ -37,6 +44,7 @@ public class GetScoreText : MonoBehaviour {
 
         sequence.OnComplete(() => {
             ObjectPool.Instance.Recycle(gameObject, false);
+            BattleMgr.Instance.RemoveActiveTxt(gameObject);
         });
     }
 }

@@ -89,10 +89,12 @@ public class Launch : SingletonMonoBehavior<Launch> {
             if (Input.GetMouseButtonDown(0)) {
                 GameStateMgr.Instance.SwitchState(GameState.Main);
                 PlayerMgr.Instance.Clear();
+                BattleMgr.Instance.Clear();
                 RoadMgr.Instance.Clear();
                 PickUpMgr.Instance.Clear();
                 ColorChangerMgr.Instance.Clear();
                 RateMgr.Instance.Clear();
+                CameraMgr.Instance.Clear();
             }
         }
 #endif

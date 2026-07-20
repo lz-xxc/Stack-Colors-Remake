@@ -21,6 +21,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
         energyFill = gameObject.GetChildControl<Image>("EnergyBar/Fill");
         processFill = gameObject.GetChildControl<Image>("ProcessBar/Fill");
         forceFill = gameObject.GetChildControl<Image>("ForceBar/Fill");
+        imgCtrl = gameObject.GetChildControl<EventTrigger>("imgCtrl");
 
         ForceBar = transform.Find("ForceBar").gameObject;
 

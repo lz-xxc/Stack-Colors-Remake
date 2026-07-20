@@ -10,10 +10,11 @@ public class PickUpView : MonoBehaviour {
     public int score { get; private set; }
     public int energy { get; private set; }
     public float posY { get; private set; }
+    public int type { get; private set; }
 
 
 
-    public void SetData(Vector3 pos, float height, int belongRoadId, int colorIndex, int score, int energy) {
+    public void SetData(Vector3 pos, float height, int belongRoadId, int colorIndex, int score, int energy, int type) {
         isTriggered = false;
 
         transform.position = pos;
