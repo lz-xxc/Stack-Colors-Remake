@@ -8,6 +8,12 @@ public class RoadView : MonoBehaviour {
 
     private int roadId;
 
+    private Renderer render;
+
+    private void Awake() {
+        render = GetComponent<Renderer>();
+    }
+
     public void SetData(int id, Vector3 pos, bool isSpeedupRoad) {
         roadId = id;
         transform.position = pos;
@@ -15,12 +21,15 @@ public class RoadView : MonoBehaviour {
 
         isTriggered = false;
         gameObject.SetActive(true);
+        if (isSpeedupRoad)
+            render.material = ColorProxy.Instance.matGray;
     }
 
     public void ClearData() {
         isTriggered = false;
 
         gameObject.SetActive(false);
+        render.material = ColorProxy.Instance.matBlack;
     }
 
     private void OnTriggerExit(Collider other) {
@@ -35,11 +44,11 @@ public class RoadView : MonoBehaviour {
 
     private void OnTriggerEnter(Collider other) {
         if (other.gameObject.tag == "Player" && !isTriggered && isSpeedupRoad) {
-            if (roadId == RoadMgr.Instance.speedupRoadStart) {
+            if (roadId == RoadMgr.Instance.roadData.speedupRoadStart) {
                 PlayerMgr.Instance.EnterSpeedupMode();
             }
 
-            if (roadId == RoadMgr.Instance.finishRoadStart - 1) {
+            if (roadId == RoadMgr.Instance.roadData.finishRoadStart - 1) {
                 PlayerMgr.Instance.setTargetZ(transform.position.z);
             }
 

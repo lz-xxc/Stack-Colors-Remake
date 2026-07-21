@@ -9,19 +9,8 @@ public class ColorChangerView : MonoBehaviour {
     public void SetData(int roadId, int index) {
         colorIndex = index;
         beLongRoadId = roadId;
-        Color color = new Color();
-        switch (colorIndex) {
-            case (0):
-                color = Color.yellow;
-                break;
-            case (1):
-                color = Color.red;
-                break;
-            case (2):
-                color = Color.green;
-                break;
-        }
-        GetComponent<Renderer>().material.color = color;
+
+        GetComponent<Renderer>().sharedMaterial = ColorProxy.Instance.materials[index];
     }
 
     public bool isBelongRoadId(int roadId) {

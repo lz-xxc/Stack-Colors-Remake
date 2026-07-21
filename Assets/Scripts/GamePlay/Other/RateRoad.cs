@@ -20,12 +20,13 @@ public class RateRoad : MonoBehaviour {
         rate = startRate + 0.1f * rateRoadId;
         txtRate.text = $"×{rate}";
         gameObject.SetActive(true);
+
     }
 
     private void OnCollisionEnter(Collision other) {
         if (other.gameObject.tag == "Prop") {
             if (RateMgr.Instance.SerMaxRate(rate)) {
-                PickUpMgr.Instance.largestRatePosZ = other.transform.position.z;
+                PickUpMgr.Instance.pickupData.largestRatePosZ = other.transform.position.z;
                 PlayerMgr.Instance.ResetCurrentTime();
             }
         }

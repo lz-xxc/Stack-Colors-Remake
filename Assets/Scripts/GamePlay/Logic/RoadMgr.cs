@@ -3,43 +3,16 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
+    // ============ Data ============
+    public RoadData roadData { get; private set; }
+
+    // ============ 运行时 ============
     private GameObject roadTran;
-
-    private int roadLogic = 0;
-    private int rateRoadLogic = 0;
-    private int maxRoad = 8;
-    public float roadLength { get; private set; } = 10;
-    public float roadWidth = 16;
-    private int rateRoadLength = 10;
-    private float deltaRecycleTime = 0.5f;
-
-    private Vector3 nextRoadPos = Vector3.zero;
-
     private List<GameObject> activeRoad = new List<GameObject>();
     private List<GameObject> activeRateRoad = new List<GameObject>();
 
-    // ===== 地图配置（只初始化一次）=====
-    private int converterPos1 = 8;   // 第2个全路段后
-    private int converterPos2 = 22;  // 中间第2个顺序后
-
-    private List<int> allLanePositions = new List<int> {
-        // 前面5个全路段（间隔1格）
-        4, 6, 10, 12, 14,
-        // 结尾3个全路段（间隔1格）
-        27, 29, 31 ,33,35
-    };
-
-    private List<int> lanePositions = new List<int> {
-        16, 19, 24  // 3个顺序（间隔2格）
-    };
-
-    public int speedupRoadStart { get; private set; } = 37;
-
-    public int finishRoadStart { get; private set; } = 42;
-
-    private int rateRoadCount = 40;
-
     public void Init() {
+        roadData = new RoadData();
         InitMsg();
 
         if (roadTran == null)
@@ -48,14 +21,20 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
     public void Clear() {
         foreach (GameObject road in activeRoad) {
-            road.GetComponent<Renderer>().material.color = Color.black;
-            ObjectPool.Instance.Recycle(road);
+            if (road != null) {
+                RoadView view = road.GetComponent<RoadView>();
+                if (view != null) view.ClearData();
+                ObjectPool.Instance.Recycle(road);
+            }
         }
         foreach (GameObject road in activeRateRoad) {
-            ObjectPool.Instance.Recycle(road);
+            if (road != null) {
+                ObjectPool.Instance.Recycle(road);
+            }
         }
         activeRoad.Clear();
         activeRateRoad.Clear();
+        roadData?.Reset();
     }
 
     public void InitMsg() {
@@ -65,85 +44,92 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
     }
 
     public void StartBattle() {
-        roadLogic = 0;
-        rateRoadLogic = 0;
-        nextRoadPos = Vector3.zero;
-        while (roadLogic < maxRoad) {
+        roadData.Reset();
+        while (roadData.roadLogic < roadData.maxRoad) {
             CreateRoad();
         }
     }
 
     public void CreateRoad() {
-        roadLogic++;
+        roadData.roadLogic++;
+        int roadId = roadData.roadLogic;
 
-        if (roadLogic >= speedupRoadStart) {
-            if (roadLogic < finishRoadStart) {
-                // 一次性生成所有加速路段
-                roadLogic--;
-                for (int i = 0; i < finishRoadStart - speedupRoadStart; i++) {
-                    roadLogic++;
-                    GameObject speedRoad = ObjectPool.Instance.Get("Road", roadTran.transform, false);
-                    RoadView roadView = speedRoad.GetComponent<RoadView>();
-                    if (roadView == null)
-                        roadView = speedRoad.AddComponent<RoadView>();
-                    roadView.SetData(roadLogic, nextRoadPos, true);
-
-                    speedRoad.GetComponent<Renderer>().material.color = Color.gray;
-                    nextRoadPos += new Vector3(0, 0, roadLength);
-                    activeRoad.Add(speedRoad);
-                }
+        if (roadId >= roadData.speedupRoadStart) {
+            if (roadId < roadData.finishRoadStart) {
+                CreateSpeedupRoads();
             }
-            if (roadLogic >= finishRoadStart && roadLogic < finishRoadStart + rateRoadCount) {
-                // 一次性生成所有倍率路段
-                for (int i = 0; i < rateRoadCount; i++) {
-                    rateRoadLogic++;
-                    roadLogic++;
-                    GameObject rateRoad = ObjectPool.Instance.Get("RateRoad", roadTran.transform, false);
-                    RateRoad roadView = rateRoad.GetComponent<RateRoad>();
-                    if (roadView == null)
-                        roadView = rateRoad.AddComponent<RateRoad>();
-                    roadView.SetData(i, nextRoadPos);
-                    nextRoadPos += new Vector3(0, 0, rateRoadLength);  // 倍率路段用 rateRoadLength
-                    activeRateRoad.Add(rateRoad);
-                }
+            else if (roadData.IsInRateRoadRange(roadId)) {
+                CreateRateRoads();
             }
         }
         else {
-            GameObject road = ObjectPool.Instance.Get("Road", roadTran.transform, false);
-            RoadView roadView = road.GetComponent<RoadView>();
-            if (roadView == null)
-                roadView = road.AddComponent<RoadView>();
-            roadView.SetData(roadLogic, nextRoadPos, false);
-
-            // ===== 转换器 =====
-            if (roadLogic == converterPos1) {
-                ColorChangerMgr.Instance.CreateColorChanger(road.transform.position, roadLogic, 0);
-            }
-            else if (roadLogic == converterPos2) {
-                ColorChangerMgr.Instance.CreateColorChanger(road.transform.position, roadLogic, 1);
-            }
-
-            // ===== 前2格空（不生成）=====
-            if (roadLogic > 2) {
-                // ===== 全路段 =====
-                if (allLanePositions.Contains(roadLogic)) {
-                    if (EnergyMgr.Instance.isEnergyMax) {
-                        PickUpMgr.Instance.CreateAllLanes(road.transform.position.z, roadLogic, ColorChangerMgr.Instance.colorIndex);
-                    }
-                    else {
-                        PickUpMgr.Instance.CreateAllLanes(road.transform.position.z, roadLogic);
-                    }
-                }
-                // ===== 顺序 =====
-                else if (lanePositions.Contains(roadLogic)) {
-                    PickUpMgr.Instance.CreateLane(road.transform.position.z, roadLogic);
-                }
-            }
-
-            activeRoad.Add(road);
-
-            nextRoadPos += new Vector3(0, 0, roadLength);  // 普通路段用 roadLength
+            CreateNormalRoad(roadId);
         }
+    }
+
+    private void CreateSpeedupRoads() {
+        for (int i = 0; i < roadData.finishRoadStart - roadData.speedupRoadStart; i++) {
+            int roadId = roadData.roadLogic;
+
+            GameObject speedRoad = ObjectPool.Instance.Get("Road", roadTran.transform, false);
+            RoadView roadView = speedRoad.AddMissingComponent<RoadView>();
+            roadView.SetData(roadId, roadData.nextRoadPos, true);
+
+            speedRoad.GetComponent<Renderer>().material.color = Color.gray;
+            roadData.nextRoadPos += new Vector3(0, 0, roadData.roadLength);
+            activeRoad.Add(speedRoad);
+            roadData.roadLogic++;
+        }
+    }
+
+    private void CreateRateRoads() {
+        for (int i = 0; i < roadData.rateRoadCount; i++) {
+            roadData.rateRoadLogic++;
+
+            GameObject rateRoad = ObjectPool.Instance.Get("RateRoad", roadTran.transform, false);
+            RateRoad roadView = rateRoad.GetComponent<RateRoad>();
+            if (roadView == null)
+                roadView = rateRoad.AddComponent<RateRoad>();
+            roadView.SetData(roadData.rateRoadLogic, roadData.nextRoadPos);
+
+            roadData.nextRoadPos += new Vector3(0, 0, roadData.rateRoadLength);
+            activeRateRoad.Add(rateRoad);
+            roadData.roadLogic++;
+        }
+    }
+
+    private void CreateNormalRoad(int roadId) {
+        GameObject road = ObjectPool.Instance.Get("Road", roadTran.transform, false);
+        RoadView roadView = road.GetComponent<RoadView>();
+        if (roadView == null)
+            roadView = road.AddComponent<RoadView>();
+        roadView.SetData(roadId, roadData.nextRoadPos, false);
+
+        // ===== 转换器 =====
+        if (roadData.IsConverterPos1(roadId)) {
+            ColorChangerMgr.Instance.CreateColorChanger(road.transform.position, roadId, 0);
+        }
+        else if (roadData.IsConverterPos2(roadId)) {
+            ColorChangerMgr.Instance.CreateColorChanger(road.transform.position, roadId, 1);
+        }
+
+        // ===== 前2格空（不生成）=====
+        if (roadId > 2) {
+            if (roadData.IsAllLanePosition(roadId)) {
+                if (EnergyMgr.Instance.isEnergyMax) {
+                    PickUpMgr.Instance.CreateAllLanes(road.transform.position.z, roadId, ColorChangerMgr.Instance.colorIndex);
+                }
+                else {
+                    PickUpMgr.Instance.CreateAllLanes(road.transform.position.z, roadId);
+                }
+            }
+            else if (roadData.IsLanePosition(roadId)) {
+                PickUpMgr.Instance.CreateLane(road.transform.position.z, roadId);
+            }
+        }
+
+        activeRoad.Add(road);
+        roadData.nextRoadPos += new Vector3(0, 0, roadData.roadLength);
     }
 
     public void RecycleRoad(GameObject road, int roadId) {
@@ -152,18 +138,18 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
     }
 
     private IEnumerator DeltaRecycleRoad(GameObject road, int roadId) {
-        yield return new WaitForSeconds(deltaRecycleTime);
+        yield return new WaitForSeconds(roadData.deltaRecycleTime);
 
-        // 先发送回收消息
         Send.SendMsg(SendType.RecycleRoad, roadId);
 
-        // 再回收道路
+        RoadView view = road.GetComponent<RoadView>();
+        if (view != null) view.ClearData();
         ObjectPool.Instance.Recycle(road, false);
 
         CreateRoad();
     }
 
     public float GetTotalDistence() {
-        return roadLength * (speedupRoadStart - 1);
+        return roadData?.GetTotalDistance() ?? 0;
     }
 }

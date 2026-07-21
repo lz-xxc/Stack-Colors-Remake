@@ -19,7 +19,7 @@ public class PickUpView : MonoBehaviour {
 
         transform.position = pos;
         this.belongRoadId = belongRoadId;
-        ChangeColorIndex(colorIndex);
+        ChangeColor(colorIndex);
         this.score = score;
         this.energy = energy;
         this.height = height;
@@ -36,7 +36,8 @@ public class PickUpView : MonoBehaviour {
         return belongRoadId == roadId;
     }
 
-    public void ChangeColorIndex(int colorIndex) {
+    public void ChangeColor(int colorIndex) {
+        this.GetComponent<Renderer>().sharedMaterial = ColorProxy.Instance.materials[colorIndex];
         this.colorIndex = colorIndex;
     }
 

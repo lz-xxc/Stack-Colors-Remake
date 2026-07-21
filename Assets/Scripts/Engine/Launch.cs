@@ -62,6 +62,7 @@ public class Launch : SingletonMonoBehavior<Launch> {
         SoundMgr.Instance.Init();
         SettingsMgr.Instance.Init();
         LevelDataMgr.Instance.Init();
+        ColorProxy.Instance.Init();
         CameraMgr.Instance.Init();
         PlayerMgr.Instance.Init();
         PickUpMgr.Instance.Init();

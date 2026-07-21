@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraMgr : SingletonMonoBehavior<CameraMgr> {
     private Camera mainCamera;
-    private float moveSpeed = 20;
+    private float moveSpeed = 25;
     private Camera MainCamera {
         get {
             if (mainCamera == null)
@@ -32,7 +32,7 @@ public class CameraMgr : SingletonMonoBehavior<CameraMgr> {
 
     public bool LerpMove() {
         MainCamera.transform.position += Vector3.forward * Time.deltaTime * moveSpeed;
-        if (MainCamera.transform.position.z >= PickUpMgr.Instance.largestRatePosZ + pivot.z) {
+        if (MainCamera.transform.position.z >= PickUpMgr.Instance.pickupData.largestRatePosZ + pivot.z) {
             moveSpeed = 0;
             return true;
         }

@@ -7,59 +7,28 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     private Transform keepPickUp;
     private GameObject lastPickupObj;
 
-    int addColorIndex = -1;//给颜色下标增加量（用于每次刷新拾取物时改变颜色摆放顺序）
-
-    private int MaxPickUpRow = 7;
-    private float PickUpPosY = 0.05f;
-    private float SpaceOfZ;//拾取物间隙的长度
-    private float pickupSpace = 0.01f;//拾取物在玩家上的间隙
-
-    //拾取物物理变量
-    private float pickUpPosY = 0;
-    private float lastPickupPosY = 0;
-    private float smallPickupHeight = 0.1f;
-    private float bigPickupHeight = 0.5f;
-    private int pickUpCount = 0;
-
-    //分数和能量
-    private int heightPickupScore = 5;
-    private int lowPickupScore = 1;
-    private int heighrPickupEnergy = 4;
-    private int lowPickupEnergy = 2;
-
-    //拾取物生成x轴
-    private float leftX = -6;
-    private float midLeftX = -3;
-    private float midX = 0;
-    private float midRightX = 3;
-    private float rightX = 6;
-    //拾取物生成位置列表
-    private float[] createPosX;
-
-    public bool isEnergyMax = false;
-
-    private int[] laneSequence = new int[] { 1, 2, 3, 3, 2, 1 };
-
-    public float largestRatePosZ = 1000;
+    public PickupData pickupData { get; private set; }
 
     private List<GameObject> activePickUps = new List<GameObject>();
 
     public void Init() {
         InitMsg();
 
+        // 初始化数据
+        pickupData = new PickupData();
+        pickupData.CalculateSpaceOfZ(10f); // 假设路面长度为10
+
         pickUpTran = pickUpTran == null ? new GameObject("pickUpTran") : pickUpTran;
-        createPosX = new float[] { leftX, midLeftX, midX, midRightX, rightX };
-        SpaceOfZ = ((10 - 7) / 8f);//（（地面长度-拾取物总长度） / 间隙个数）
     }
 
     public void Clear() {
         lastPickupObj = null;
-        lastPickupPosY = 0;
-        pickUpPosY = 0;
-        pickUpCount = 0;
-        largestRatePosZ = 1000;
+        pickupData?.Reset(); // 使用数据类的Reset
+
         foreach (GameObject pickup in activePickUps) {
-            ObjectPool.Instance.Recycle(pickup);
+            if (pickup != null) {
+                ObjectPool.Instance.Recycle(pickup);
+            }
         }
         activePickUps.Clear();
     }
@@ -79,38 +48,42 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     //全边不统一颜色拾取物
     public void CreateAllLanes(float roadPosZ, int roadId) {
         int colorIndex;
-        for (int i = 0; i < MaxPickUpRow; i++) {
-            float posZ = (roadPosZ - 4.5f + SpaceOfZ) + ((SpaceOfZ + 1) * i);//初始位置：（路面中心位置 - 路面中心到边缘减去拾取物宽度一半 + 间隔长度） + 拾取物中心间隔长度：（（间隔长度 + 拾取物长度） * 第几行拾取物）
-            for (int j = 1; j < createPosX.Length - 1; j++) {
-                colorIndex = (j + addColorIndex + 1) % 3;
-                Vector3 pos = new Vector3(createPosX[j], PickUpPosY, posZ);
-                GameObject Pickup = CreatePickup(pos, smallPickupHeight, roadId, colorIndex, lowPickupScore, lowPickupEnergy, 1);
+        for (int i = 0; i < pickupData.maxPickUpRow; i++) {
+            float posZ = (roadPosZ - 4.5f + pickupData.spaceOfZ) + ((pickupData.spaceOfZ + 1) * i);
+            for (int j = 1; j < pickupData.createPosX.Length - 1; j++) {
+                colorIndex = (j + pickupData.addColorIndex + 1) % 3;
+                Vector3 pos = new Vector3(pickupData.createPosX[j], pickupData.pickUpPosY, posZ);
+                GameObject Pickup = CreatePickup(pos, pickupData.smallPickupHeight, roadId, colorIndex,
+                    pickupData.lowPickupScore, pickupData.lowPickupEnergy, 1);
                 activePickUps.Add(Pickup);
             }
         }
-        addColorIndex++;
+        pickupData.addColorIndex++;
     }
 
     //全边统一颜色拾取物
     public void CreateAllLanes(float roadPosZ, int roadId, int colorIndex) {
-        for (int i = 0; i < MaxPickUpRow; i++) {
-            float posZ = (roadPosZ - 4.5f + SpaceOfZ) + ((SpaceOfZ + 1) * i);//初始位置：（路面中心位置 - 路面中心到边缘减去拾取物宽度一半 + 间隔长度） + 拾取物中心间隔长度：（（间隔长度 + 拾取物长度） * 第几行拾取物）
-            for (int j = 1; j < createPosX.Length - 1; j++) {
-                Vector3 pos = new Vector3(createPosX[j], PickUpPosY, posZ);
-                GameObject Pickup = CreatePickup(pos, smallPickupHeight, roadId, colorIndex, lowPickupScore, lowPickupEnergy, 1);
+        for (int i = 0; i < pickupData.maxPickUpRow; i++) {
+            float posZ = (roadPosZ - 4.5f + pickupData.spaceOfZ) + ((pickupData.spaceOfZ + 1) * i);
+            for (int j = 1; j < pickupData.createPosX.Length - 1; j++) {
+                Vector3 pos = new Vector3(pickupData.createPosX[j], pickupData.pickUpPosY, posZ);
+                GameObject Pickup = CreatePickup(pos, pickupData.smallPickupHeight, roadId, colorIndex,
+                    pickupData.lowPickupScore, pickupData.lowPickupEnergy, 1);
                 activePickUps.Add(Pickup);
             }
         }
-        addColorIndex++;
+        pickupData.addColorIndex++;
     }
 
     //v形生成拾取物
     public void CreateLane(float roadPosZ, int roadId) {
         int colorIndex = ColorChangerMgr.Instance.colorIndex;
-        for (int i = 0; i < laneSequence.Length; i++) {
-            float posZ = (roadPosZ - 4.5f + SpaceOfZ) + ((SpaceOfZ + 1) * i * 2);
-            Vector3 pos = new Vector3(createPosX[laneSequence[i]], PickUpPosY * 5, posZ);
-            GameObject pickup = CreatePickup(pos, bigPickupHeight, roadId, colorIndex, heightPickupScore, heighrPickupEnergy, 2);
+        for (int i = 0; i < pickupData.laneSequence.Length; i++) {
+            float posZ = (roadPosZ - 4.5f + pickupData.spaceOfZ) + ((pickupData.spaceOfZ + 1) * i * 2);
+            Vector3 pos = new Vector3(pickupData.createPosX[pickupData.laneSequence[i]],
+                pickupData.pickUpPosY * 5, posZ);
+            GameObject pickup = CreatePickup(pos, pickupData.bigPickupHeight, roadId, colorIndex,
+                pickupData.heightPickupScore, pickupData.heightPickupEnergy, 2);
             activePickUps.Add(pickup);
         }
     }
@@ -123,9 +96,10 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void RecyclePickUp(object[] _obj) {
+        int roadId = (int)_obj[0];
         for (int i = activePickUps.Count - 1; i >= 0; i--) {
             GameObject pickup = activePickUps[i];
-            if (pickup != null && pickup.GetComponent<PickUpView>().isBelongRoadId((int)_obj[0])) {
+            if (pickup != null && pickup.GetComponent<PickUpView>().isBelongRoadId(roadId)) {
                 ObjectPool.Instance.Recycle(pickup);
                 activePickUps.RemoveAt(i);
             }
@@ -136,19 +110,18 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         PickUpView pickUpView = obj.GetComponent<PickUpView>();
         PickUpView lastView = lastPickupObj?.GetComponent<PickUpView>();
 
-        if (PlayerMgr.Instance.colorIndex != colorIndex) {
-            if (pickUpCount > 0) {
+        if (PlayerMgr.Instance.playerData.colorIndex != colorIndex) {
+            if (pickupData.pickUpCount > 0) {
                 if (EnergyMgr.Instance.Energy > 0)
                     EnergyMgr.Instance.Energy -= pickUpView.energy;
                 lastPickupObj = PlayerMgr.Instance.RemovePickUp();
-                pickUpCount--;
+                pickupData.pickUpCount--;
                 if (lastPickupObj != null) {
                     PickUpView removedView = lastPickupObj.GetComponent<PickUpView>();
                     if (removedView != null) {
-                        lastPickupPosY = removedView.posY;
-                        pickUpPosY = lastPickupPosY;
+                        pickupData.lastPickupPosY = removedView.posY;
+                        pickupData.currentPickUpPosY = pickupData.lastPickupPosY;
                     }
-
                 }
             }
             else {
@@ -159,17 +132,17 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
             return;
         }
 
-        if (pickUpCount == 0) {
+        if (pickupData.pickUpCount == 0) {
             keepPickUp = PlayerMgr.Instance.keepPickUpTran;
-            pickUpPosY += pickUpView.height + pickupSpace;
-            obj.transform.position = keepPickUp.position + Vector3.up * pickUpPosY;
+            pickupData.currentPickUpPosY += pickUpView.height + pickupData.pickupSpace;
+            obj.transform.position = keepPickUp.position + Vector3.up * pickupData.currentPickUpPosY;
         }
         else {
-            lastPickupPosY = pickUpPosY;
-            pickUpPosY += pickUpView.height / 2 + lastView.height / 2 + pickupSpace;
-            obj.transform.position = keepPickUp.position + Vector3.up * pickUpPosY;
+            pickupData.lastPickupPosY = pickupData.currentPickUpPosY;
+            pickupData.currentPickUpPosY += pickUpView.height / 2 + lastView.height / 2 + pickupData.pickupSpace;
+            obj.transform.position = keepPickUp.position + Vector3.up * pickupData.currentPickUpPosY;
         }
-        pickUpView.SetPosY(pickUpPosY);
+        pickUpView.SetPosY(pickupData.currentPickUpPosY);
         lastPickupObj = obj;
 
         obj.transform.SetParent(keepPickUp);
@@ -177,38 +150,27 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         activePickUps.Remove(obj);
         PlayerMgr.Instance.AddPickUp(obj);
 
-
         ScoreMgr.Instance.Score += pickUpView.score;
-        if (!isEnergyMax)
+        if (!pickupData.isEnergyMax)
             EnergyMgr.Instance.Energy += pickUpView.energy;
 
         BattleMgr.Instance.ShowFloatingText(keepPickUp.transform.position, pickUpView.score);
 
-        pickUpCount++;
+        pickupData.pickUpCount++;
     }
 
     public void PickupChangeColor(object[] _obj) {
         GameObject pickup = (GameObject)_obj[0];
         int colorIndex = (int)_obj[1];
-        pickup.GetComponent<PickUpView>().ChangeColorIndex(colorIndex);
-        Renderer renderer = pickup.GetComponent<Renderer>();
-        switch (colorIndex) {
-            case (0):
-                renderer.material.color = Color.yellow;
-                break;
-            case (1):
-                renderer.material.color = Color.red;
-                break;
-            case (2):
-                renderer.material.color = Color.green;
-                break;
-        }
+        pickup.GetComponent<PickUpView>().ChangeColor(colorIndex);
     }
 
     private void OnEnergyMax(object[] _obj) {
-        int colorIndex = PlayerMgr.Instance.colorIndex;
+        pickupData.isEnergyMax = true;
+        int colorIndex = PlayerMgr.Instance.playerData.colorIndex;
         foreach (GameObject obj in activePickUps) {
-            if (ColorChangerMgr.Instance.colorChanger != null && obj.GetComponent<PickUpView>().belongRoadId >= ColorChangerMgr.Instance.roadId) {
+            if (ColorChangerMgr.Instance.colorChanger != null &&
+                obj.GetComponent<PickUpView>().belongRoadId >= ColorChangerMgr.Instance.roadId) {
                 colorIndex = ColorChangerMgr.Instance.colorIndex;
             }
             Send.SendMsg(SendType.PickupColorChange, obj, colorIndex);
