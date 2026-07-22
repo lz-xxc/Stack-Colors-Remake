@@ -26,7 +26,7 @@ public class RateRoad : MonoBehaviour {
     private void OnCollisionEnter(Collision other) {
         if (other.gameObject.tag == "Prop") {
             if (RateMgr.Instance.SerMaxRate(rate)) {
-                PickUpMgr.Instance.pickupData.largestRatePosZ = other.transform.position.z;
+                PickUpMgr.Instance.pickupData.SetLastestRatePosZ(other.transform.position.z);
                 PlayerMgr.Instance.ResetCurrentTime();
             }
         }

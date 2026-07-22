@@ -73,6 +73,16 @@ public class PlayerView : MonoBehaviour {
     }
 
     /// <summary>
+    /// 获取玩家Z轴位置
+    /// </summary>
+    public float GetPlayerPositionZ() {
+        if (playerTransform != null) {
+            return playerTransform.position.z;
+        }
+        return 0f;
+    }
+
+    /// <summary>
     /// 更新玩家颜色
     /// </summary>
     public void UpdateColor(Material material) {
@@ -98,26 +108,9 @@ public class PlayerView : MonoBehaviour {
     /// <summary>
     /// 工具缩放动画
     /// </summary>
-    public void ScaleTool(bool isMax, string playerName = "") {
-        if (pickupTool == null) return;
-
-        // 停止当前动画
-        if (currentTweener != null) {
-            currentTweener.Kill();
-            currentTweener = null;
-        }
-
-        float targetScale;
-        if (isMax) {
-            // 根据玩家名称决定缩放大小
-            targetScale = playerName == "Player4(Clone)" ? 5f : maxToolScale;
-        }
-        else {
-            targetScale = playerName == "Player4(Clone)" ? 1f : normalToolScale;
-        }
-
+    public void ScaleTool(float scale) {
         // 执行缩放动画
-        currentTweener = pickupTool.DOScaleX(targetScale, toolScaleSpeed)
+        currentTweener = pickupTool.DOScaleX(scale, toolScaleSpeed)
             .SetEase(Ease.OutBack)
             .OnComplete(() => {
                 currentTweener = null;

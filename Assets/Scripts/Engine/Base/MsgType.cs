@@ -45,5 +45,7 @@ public enum SendType {
     EnergyEmpty,
     //EventTrigger
     CtrlDrag,
+    //Game
+    Pickup,
 }
 

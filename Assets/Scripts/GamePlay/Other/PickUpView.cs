@@ -28,8 +28,9 @@ public class PickUpView : MonoBehaviour {
         gameObject.SetActive(true);
     }
 
-    public void SetPosY(float posY) {
-        this.posY = posY;
+    public void SetTransform(Transform parent, float posY) {
+        transform.SetParent(parent);
+        transform.localPosition = new Vector3(0, posY, 0);
     }
 
     public bool isBelongRoadId(int roadId) {
@@ -43,7 +44,7 @@ public class PickUpView : MonoBehaviour {
 
     void OnTriggerEnter(Collider other) {
         if (other.tag == "Player" && !isTriggered) {
-            PickUpMgr.Instance.PickUp(gameObject, colorIndex);
+            Send.SendMsg(SendType.Pickup, gameObject, colorIndex);
             isTriggered = true;
         }
     }

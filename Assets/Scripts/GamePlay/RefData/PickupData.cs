@@ -28,17 +28,19 @@ public class PickupData {
     public float[] createPosX { get; private set; }
 
     // 颜色相关
-    public int addColorIndex { get; set; }
-    public bool isEnergyMax { get; set; }
+    public int colorIndexIncrement { get; private set; }
+    public bool isEnergyMax { get; private set; }
 
     // 车道序列
     public int[] laneSequence { get; private set; }
 
     // 其他
-    public float largestRatePosZ { get; set; }
-    public int pickUpCount { get; set; }
-    public float lastPickupPosY { get; set; }
-    public float currentPickUpPosY { get; set; }
+    public float largestRatePosZ { get; private set; }
+    public int pickUpCount { get; private set; }
+    public float currentPickUpPosY { get; private set; }
+
+    //场景中拾取物
+    public List<GameObject> activePickUps { get; private set; } = new List<GameObject>();
 
     public PickupData() {
         // 生成参数
@@ -65,7 +67,7 @@ public class PickupData {
         createPosX = new float[] { leftX, midLeftX, midX, midRightX, rightX };
 
         // 颜色相关
-        addColorIndex = -1;
+        colorIndexIncrement = -1;
         isEnergyMax = false;
 
         // 车道序列
@@ -74,7 +76,6 @@ public class PickupData {
         // 其他
         largestRatePosZ = 1000f;
         pickUpCount = 0;
-        lastPickupPosY = 0f;
         currentPickUpPosY = 0f;
     }
 
@@ -84,13 +85,65 @@ public class PickupData {
         spaceOfZ = ((roadLength - maxPickUpRow) / (maxPickUpRow + 1));
     }
 
+    //计算拾取后木板位置
+    public void CalculatePosY(float height, float lastHeight) {
+        currentPickUpPosY += height / 2 + lastHeight / 2 + spaceOfZ;
+    }
+
     // 重置方法
     public void Reset() {
-        addColorIndex = -1;
+        colorIndexIncrement = -1;
         isEnergyMax = false;
         largestRatePosZ = 1000f;
         pickUpCount = 0;
-        lastPickupPosY = 0f;
         currentPickUpPosY = 0f;
+    }
+
+    //回收场景木板并清空列表
+    public void ClearActivePickups() {
+        foreach (GameObject pickup in activePickUps) {
+            if (pickup != null) {
+                ObjectPool.Instance.Recycle(pickup);
+            }
+        }
+
+        activePickUps.Clear();
+    }
+
+    //场景木板列表增加
+    public void AddActivePickup(GameObject obj) {
+        activePickUps.Add(obj);
+    }
+
+    //场景木板列表移除
+    public void RemoveActivePickup(GameObject obj) {
+        activePickUps.Remove(obj);
+    }
+
+    //场景木板列表移除(下标)
+    public void RemoveActivePickupAt(int index) {
+        activePickUps.RemoveAt(index);
+    }
+
+    //改变满能量状态
+    public void SetIsEnergyMax(bool isEnergyMax) {
+        this.isEnergyMax = isEnergyMax;
+    }
+
+    //改变颜色下标增加量
+    public void AddColorIndexIncrement() {
+        colorIndexIncrement++;
+    }
+
+    public void ChangePickupCount(int amount) {
+        pickUpCount += amount;
+    }
+
+    public void SetCurrentPosY(float posY) {
+        currentPickUpPosY = posY;
+    }
+
+    public void SetLastestRatePosZ(float posZ) {
+        largestRatePosZ = posZ;
     }
 }

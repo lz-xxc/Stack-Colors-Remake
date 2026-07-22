@@ -10,12 +10,19 @@ using UnityEngine.EventSystems;
 /// </summary>
 public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     private GameObject playerPref = null;
-    public GameObject player = null;
-    public Transform keepPickUpTran;
+    private GameObject player = null;
+    private Transform keepPickUpTran;
     private Transform pickupTool;
     public PlayerData playerData { get; private set; }
 
     private PlayerView playerView;
+
+    public int ColorIndex {
+        get {
+            return playerData.colorIndex;
+        }
+        private set { }
+    }
 
     private Tweener moveTweener;
 
@@ -28,8 +35,8 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
     //清除数据
     public void Clear() {
-        if (playerData != null && playerData.keepPickUps != null) {
-            foreach (GameObject obj in playerData.keepPickUps) {
+        if (playerData != null && playerData.GetKeepPickups() != null) {
+            foreach (GameObject obj in playerData.GetKeepPickups()) {
                 if (obj != null) {
                     Rigidbody rb = obj.GetComponent<Rigidbody>();
                     if (rb != null) {
@@ -79,7 +86,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         CreatePlayer();
         pickupTool = player.transform.Find("PickupTool");
         keepPickUpTran = player.transform.Find("KeepPickUp");
-        playerData.currentForwSpeed = playerData.forwardSpeed;
+        playerData.StartBattleSpeed();
         Send.SendMsg(SendType.PlayerColorChange, playerData.colorIndex);
     }
 
@@ -91,28 +98,25 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
                 break;
             case (E_PlayerState.Speedup):
                 if (Input.GetMouseButtonDown(0)) {
-                    OnAddSpeedClick();
+                    playerData.OnSpeedupClick();
                 }
-                SpeedupReduce();
+                playerData.TickSpeedupReduce(Time.deltaTime);
                 CameraMgr.Instance.FollowObj(player.transform);
-                BattleWindow.Instance.ForceAmount((playerData.currentForwSpeed - playerData.minSpeedup) / (playerData.maxSpeedup - playerData.minSpeedup));
-                if (player.transform.position.z >= playerData.targetPosZ) {
+                BattleWindow.Instance.ForceAmount(playerData.CalcSpeedupRate());
+                if (playerData.ReachedTarget(player.transform.position.z)) {
                     EnterFinishMode();
                 }
                 break;
             case (E_PlayerState.Finish):
                 if (!playerData.isForce) {
-                    playerData.isForce = true;
+                    playerData.BeginFinishLaunch();
                     AddRigidBody();
-                    playerData.currentForwSpeed = 0;
                 }
                 ToolMgr.Instance.DelayCallBack(() => {
                     playerData.moveOver = CameraMgr.Instance.LerpMove();
                 }, 1f);
-                if (playerData.moveOver) {
-                    playerData.currentFinalTime += Time.deltaTime;
-                }
-                if (playerData.currentFinalTime >= playerData.finalTime) {
+                playerData.TickFinalTime(Time.deltaTime);
+                if (playerData.IsFinalTimeOver()) {
                     GameStateMgr.Instance.SwitchState(GameState.GameOver);
                     BattleMgr.Instance.state = BattleState.GameOver;
                 }
@@ -122,33 +126,20 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         AutoMoveForwardSpeed();
     }
 
-    private void OnAddSpeedClick() {
-        playerData.currentForwSpeed += playerData.clickAddSpeed;
-        if (playerData.currentForwSpeed > playerData.maxSpeedup)
-            playerData.currentForwSpeed = playerData.maxSpeedup;
-    }
-
-    private void SpeedupReduce() {
-        playerData.currentForwSpeed -= Time.deltaTime * playerData.reduceSpeedup;
-        if (playerData.currentForwSpeed < playerData.minSpeedup)
-            playerData.currentForwSpeed = playerData.minSpeedup;
+    public Transform KeepPickUpAnchor() {
+        return keepPickUpTran;
     }
 
     public void EnterSpeedupMode() {
         if (PickUpMgr.Instance.pickupData.isEnergyMax) {
             EnergyMgr.Instance.Energy = 0;
         }
-        if (playerData.playerState != E_PlayerState.Speedup)
-            playerData.playerState = E_PlayerState.Speedup;
+        playerData.EnterSpeedup();
         BattleWindow.Instance.ShowForceBar();
-        playerData.currentForwSpeed = playerData.minSpeedup;
     }
 
     public void EnterFinishMode() {
-        if (playerData.playerState != E_PlayerState.Finish) {
-            playerData.playerState = E_PlayerState.Finish;
-        }
-        playerData.finalForceRate = ((playerData.currentForwSpeed - playerData.minSpeedup) / (playerData.maxSpeedup - playerData.minSpeedup));
+        playerData.EnterFinish();
     }
 
     public void CreatePlayer() {
@@ -167,10 +158,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         if (playerView != null) {
             playerView.MoveForward(playerData.currentForwSpeed);
         }
-        else {
-            player.transform.Translate(Vector3.forward * Time.deltaTime * playerData.currentForwSpeed, Space.Self);
-        }
-        BattleWindow.Instance.ProcessAmount(player.transform.position.z / RoadMgr.Instance.GetTotalDistence());
+        BattleWindow.Instance.ProcessAmount(playerView.GetPlayerPositionZ() / RoadMgr.Instance.GetTotalDistence());
     }
 
     public void setTargetZ(float z) {
@@ -188,15 +176,15 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
     public void OnEnergyMax(object[] _obj) {
         if (playerView != null) {
-            playerView.ScaleTool(true, player?.name);
+            playerView.ScaleTool(playerData.GetToolScale(true));
         }
-        playerData.currentForwSpeed += 5;
-        PickUpMgr.Instance.pickupData.isEnergyMax = true;
+        playerData.ApplyEnergyMaxBonus();
+        PickUpMgr.Instance.pickupData.SetIsEnergyMax(true);
     }
 
     public void OnEnergyEmpty(object[] _obj) {
         if (playerView != null) {
-            playerView.ScaleTool(false, player?.name);
+            playerView.ScaleTool(playerData.GetToolScale(false));
         }
         else {
             if (player?.name == "Player4(Clone)")
@@ -204,27 +192,25 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
             else
                 pickupTool.DOScaleX(2, 0.5f);
         }
-        playerData.currentForwSpeed = playerData.forwardSpeed;
-        PickUpMgr.Instance.pickupData.isEnergyMax = false;
+        playerData.ResetForwardSpeed();
+        PickUpMgr.Instance.pickupData.SetIsEnergyMax(false);
     }
 
     // AddPickUp
     public void AddPickUp(GameObject pickup) {
         if (pickup == null) return;
-        if (!playerData.keepPickUps.Contains(pickup)) {
-            playerData.keepPickUps.Add(pickup);
-        }
+        playerData.AddPickUp(pickup);
     }
 
     // RemovePickUp
     public GameObject RemovePickUp() {
-        if (playerData.keepPickUps.Count == 0)
+        if (playerData.GetKeepPickups().Count == 0)
             return null;
-        if (playerData.keepPickUps.Count > 0) {
-            ObjectPool.Instance.Recycle(playerData.keepPickUps[playerData.keepPickUps.Count - 1], true);
-            playerData.keepPickUps.RemoveAt(playerData.keepPickUps.Count - 1);
-            if (playerData.keepPickUps.Count > 0)
-                return playerData.keepPickUps[playerData.keepPickUps.Count - 1];
+        if (playerData.GetKeepPickups().Count > 0) {
+            ObjectPool.Instance.Recycle(playerData.GetKeepPickups()[playerData.GetKeepPickups().Count - 1], true);
+            playerData.RemovePickUp();
+            if (playerData.GetKeepPickups().Count > 0)
+                return playerData.GetKeepPickups()[playerData.GetKeepPickups().Count - 1];
             else
                 return null;
         }
@@ -236,7 +222,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     }
 
     public void ResetCurrentTime() {
-        playerData.currentFinalTime = 0;
+        playerData.ResetFinalTime();
     }
 
     // OnCtrlDrag
@@ -244,14 +230,9 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         PointerEventData data = (PointerEventData)_obj[0];
         Vector3 delta = data.delta;
         if (delta.x != 0) {
-            player.transform.position += new Vector3(delta.x * playerData.horizontalSpeed, 0, 0);
+            float posX = delta.x * playerData.horizontalSpeed;
             float roadWidth = RoadMgr.Instance.roadData.roadWidth;
-            if (player.transform.position.x > roadWidth / 2) {
-                player.transform.position = new Vector3(roadWidth / 2, player.transform.position.y, player.transform.position.z);
-            }
-            else if (player.transform.position.x < -(roadWidth / 2)) {
-                player.transform.position = new Vector3(-(roadWidth / 2), player.transform.position.y, player.transform.position.z);
-            }
+            playerView.UpdatePositionX(posX, roadWidth);
         }
     }
 
@@ -266,19 +247,17 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     private void LaunchAllPickups() {
         if (keepPickUpTran == null) return;
 
-        for (int i = 0; i < playerData.keepPickUps.Count; i++) {
-            LaunchPickup(playerData.keepPickUps[i], i);
+        for (int i = 0; i < playerData.GetKeepPickups().Count; i++) {
+            LaunchPickup(playerData.GetKeepPickups()[i], i);
         }
     }
 
     private void LaunchPickup(GameObject pickup, int index) {
         if (pickup == null) return;
 
-        // 使用 finalForceRate 在 minForce 和 maxForce 之间插值，保证最低也有推力
-        float forwardForce = Mathf.Lerp(playerData.minForce, playerData.maxForce, playerData.finalForceRate) + index * ((3f * playerData.finalForceRate) + 1);
-
         if (playerView != null) {
-            playerView.LaunchPickup(pickup, Vector3.forward * forwardForce, 5f + (index * 0.01f));
+            float forwardForce = playerData.CalcLaunchForce(index);
+            playerView.LaunchPickup(pickup, Vector3.forward * forwardForce, playerData.CalcLaunchMass(index));
         }
     }
 }
