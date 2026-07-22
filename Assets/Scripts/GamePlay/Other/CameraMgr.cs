@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class CameraMgr : SingletonMonoBehavior<CameraMgr> {
     private Camera mainCamera;
+    private float defaultmoveSpeed = 27;
     private float moveSpeed = 25;
     private Camera MainCamera {
         get {
@@ -22,7 +23,7 @@ public class CameraMgr : SingletonMonoBehavior<CameraMgr> {
     }
 
     public void Clear() {
-        moveSpeed = 16;
+        moveSpeed = defaultmoveSpeed;
     }
 
     public void FollowObj(Transform obj) {
@@ -37,7 +38,7 @@ public class CameraMgr : SingletonMonoBehavior<CameraMgr> {
             return true;
         }
         else {
-            moveSpeed = 17;
+            moveSpeed = defaultmoveSpeed;
         }
         return false;
     }

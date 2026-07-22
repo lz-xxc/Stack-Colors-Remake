@@ -17,12 +17,6 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
     private PlayerView playerView;
 
-    //速度
-    private float currentForwSpeed;
-
-    //到达终点
-    float currentFinalTime = 0;
-
     private Tweener moveTweener;
 
     //初始化
@@ -53,7 +47,6 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         }
 
         playerData.Reset();
-        currentForwSpeed = 0;
         keepPickUpTran = null;
         pickupTool = null;
 
@@ -71,7 +64,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         Send.RegisterMsg(SendType.CtrlDrag, OnCtrlDrag);
     }
 
-    //反注册消息 - 保持不变
+    //反注册消息
     public void ClearMsg() {
         Send.UnregisterMsg(SendType.PlayerColorChange, PlayerChangeColor);
         Send.UnregisterMsg(SendType.EnergyMax, OnEnergyMax);
@@ -80,17 +73,17 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         Send.UnregisterMsg(SendType.CtrlDrag, OnCtrlDrag);
     }
 
-    //开始游戏时调用 - 保持不变
+    //开始游戏时调用 
     public void StartBattle() {
         playerData = new PlayerData();
         CreatePlayer();
         pickupTool = player.transform.Find("PickupTool");
         keepPickUpTran = player.transform.Find("KeepPickUp");
-        currentForwSpeed = playerData.forwardSpeed;
+        playerData.currentForwSpeed = playerData.forwardSpeed;
         Send.SendMsg(SendType.PlayerColorChange, playerData.colorIndex);
     }
 
-    //Update函数 - 保持不变
+    //Update函数
     public void OnUpdate() {
         switch (playerData.playerState) {
             case (E_PlayerState.Pickup):
@@ -102,7 +95,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
                 }
                 SpeedupReduce();
                 CameraMgr.Instance.FollowObj(player.transform);
-                BattleWindow.Instance.ForceAmount((currentForwSpeed - playerData.minSpeedup) / (playerData.maxSpeedup - playerData.minSpeedup));
+                BattleWindow.Instance.ForceAmount((playerData.currentForwSpeed - playerData.minSpeedup) / (playerData.maxSpeedup - playerData.minSpeedup));
                 if (player.transform.position.z >= playerData.targetPosZ) {
                     EnterFinishMode();
                 }
@@ -111,14 +104,15 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
                 if (!playerData.isForce) {
                     playerData.isForce = true;
                     AddRigidBody();
-                    currentForwSpeed = 0;
+                    playerData.currentForwSpeed = 0;
                 }
-                bool moveOver = CameraMgr.Instance.LerpMove();
-                if (moveOver) {
-                    currentFinalTime += Time.deltaTime;
+                ToolMgr.Instance.DelayCallBack(() => {
+                    playerData.moveOver = CameraMgr.Instance.LerpMove();
+                }, 1f);
+                if (playerData.moveOver) {
+                    playerData.currentFinalTime += Time.deltaTime;
                 }
-                if (currentFinalTime >= playerData.finalTime) {
-                    Debug.Log(1);
+                if (playerData.currentFinalTime >= playerData.finalTime) {
                     GameStateMgr.Instance.SwitchState(GameState.GameOver);
                     BattleMgr.Instance.state = BattleState.GameOver;
                 }
@@ -129,15 +123,15 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     }
 
     private void OnAddSpeedClick() {
-        currentForwSpeed += playerData.clickAddSpeed;
-        if (currentForwSpeed > playerData.maxSpeedup)
-            currentForwSpeed = playerData.maxSpeedup;
+        playerData.currentForwSpeed += playerData.clickAddSpeed;
+        if (playerData.currentForwSpeed > playerData.maxSpeedup)
+            playerData.currentForwSpeed = playerData.maxSpeedup;
     }
 
     private void SpeedupReduce() {
-        currentForwSpeed -= Time.deltaTime * playerData.reduceSpeedup;
-        if (currentForwSpeed < playerData.minSpeedup)
-            currentForwSpeed = playerData.minSpeedup;
+        playerData.currentForwSpeed -= Time.deltaTime * playerData.reduceSpeedup;
+        if (playerData.currentForwSpeed < playerData.minSpeedup)
+            playerData.currentForwSpeed = playerData.minSpeedup;
     }
 
     public void EnterSpeedupMode() {
@@ -147,14 +141,14 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         if (playerData.playerState != E_PlayerState.Speedup)
             playerData.playerState = E_PlayerState.Speedup;
         BattleWindow.Instance.ShowForceBar();
-        currentForwSpeed = playerData.minSpeedup;
+        playerData.currentForwSpeed = playerData.minSpeedup;
     }
 
     public void EnterFinishMode() {
         if (playerData.playerState != E_PlayerState.Finish) {
             playerData.playerState = E_PlayerState.Finish;
         }
-        playerData.finalForceRate = ((currentForwSpeed - playerData.minSpeedup) / (playerData.maxSpeedup - playerData.minSpeedup));
+        playerData.finalForceRate = ((playerData.currentForwSpeed - playerData.minSpeedup) / (playerData.maxSpeedup - playerData.minSpeedup));
     }
 
     public void CreatePlayer() {
@@ -171,10 +165,10 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
     public void AutoMoveForwardSpeed() {
         if (playerView != null) {
-            playerView.MoveForward(currentForwSpeed);
+            playerView.MoveForward(playerData.currentForwSpeed);
         }
         else {
-            player.transform.Translate(Vector3.forward * Time.deltaTime * currentForwSpeed, Space.Self);
+            player.transform.Translate(Vector3.forward * Time.deltaTime * playerData.currentForwSpeed, Space.Self);
         }
         BattleWindow.Instance.ProcessAmount(player.transform.position.z / RoadMgr.Instance.GetTotalDistence());
     }
@@ -190,28 +184,13 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         if (playerView != null) {
             playerView.UpdateColor(mat);
         }
-        else {
-            // 备用方案
-            player.GetComponent<Renderer>().sharedMaterial = mat;
-            pickupTool.GetComponent<Renderer>().sharedMaterial = mat;
-            foreach (Transform pickup in keepPickUpTran) {
-                pickup.GetComponent<Renderer>().sharedMaterial = mat;
-            }
-        }
     }
 
     public void OnEnergyMax(object[] _obj) {
         if (playerView != null) {
             playerView.ScaleTool(true, player?.name);
         }
-        else {
-            // 备用方案
-            if (player?.name == "Player4(Clone)")
-                pickupTool.DOScaleX(5, 0.5f);
-            else
-                pickupTool.DOScaleX(10, 0.5f);
-        }
-        currentForwSpeed += 5;
+        playerData.currentForwSpeed += 5;
         PickUpMgr.Instance.pickupData.isEnergyMax = true;
     }
 
@@ -225,11 +204,11 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
             else
                 pickupTool.DOScaleX(2, 0.5f);
         }
-        currentForwSpeed = playerData.forwardSpeed;
+        playerData.currentForwSpeed = playerData.forwardSpeed;
         PickUpMgr.Instance.pickupData.isEnergyMax = false;
     }
 
-    // AddPickUp - 保持不变
+    // AddPickUp
     public void AddPickUp(GameObject pickup) {
         if (pickup == null) return;
         if (!playerData.keepPickUps.Contains(pickup)) {
@@ -237,7 +216,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         }
     }
 
-    // RemovePickUp - 保持不变
+    // RemovePickUp
     public GameObject RemovePickUp() {
         if (playerData.keepPickUps.Count == 0)
             return null;
@@ -257,10 +236,10 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     }
 
     public void ResetCurrentTime() {
-        currentFinalTime = 0;
+        playerData.currentFinalTime = 0;
     }
 
-    // OnCtrlDrag - 保持不变
+    // OnCtrlDrag
     public void OnCtrlDrag(object[] _obj) {
         PointerEventData data = (PointerEventData)_obj[0];
         Vector3 delta = data.delta;
@@ -276,7 +255,6 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         }
     }
 
-    // OnPlayerSkinChange 
     private void OnPlayerSkinChange(object[] _obj) {
         playerData.skinName = (string)_obj[0];
         playerPref = LocalAssetMgr.Instance.Load_Prefab(playerData.skinName);
@@ -289,7 +267,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         if (keepPickUpTran == null) return;
 
         for (int i = 0; i < playerData.keepPickUps.Count; i++) {
-            LaunchPickup(playerData.keepPickUps[playerData.keepPickUps.Count - 1 - i], i);
+            LaunchPickup(playerData.keepPickUps[i], i);
         }
     }
 
@@ -297,26 +275,10 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         if (pickup == null) return;
 
         // 使用 finalForceRate 在 minForce 和 maxForce 之间插值，保证最低也有推力
-        float forwardForce = Mathf.Lerp(playerData.minForce, playerData.maxForce, playerData.finalForceRate) + index * 0.1f;
+        float forwardForce = Mathf.Lerp(playerData.minForce, playerData.maxForce, playerData.finalForceRate) + index * ((3f * playerData.finalForceRate) + 1);
 
-        // if (playerView != null) {
-        //     playerView.LaunchPickup(pickup, Vector3.forward * forwardForce, 3f + (index * 0.02f));
-        // }
-        // else {
-        // 备用方案
-        pickup.transform.SetParent(null);
-        Rigidbody rb = pickup.GetComponent<Rigidbody>();
-        if (rb == null) {
-            rb = pickup.AddComponent<Rigidbody>();
+        if (playerView != null) {
+            playerView.LaunchPickup(pickup, Vector3.forward * forwardForce, 5f + (index * 0.01f));
         }
-        rb.isKinematic = false;
-        rb.useGravity = true;
-        rb.mass = 2f + (index * 0.02f);
-        rb.drag = 0.15f;
-        rb.angularDrag = 0.1f;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-        rb.constraints = RigidbodyConstraints.None;
-        rb.AddForce(Vector3.forward * forwardForce, ForceMode.Impulse);
-        //  }
     }
 }
