@@ -38,6 +38,7 @@ public class PlayerData {
     public float currentFinalTime;
     public float finalTime { get; private set; }
     public bool isForce;
+    public bool moveOver;
 
     // 加速地段相关
     public bool isAtSpeedupRoad;
@@ -68,19 +69,20 @@ public class PlayerData {
         keepPickUps = new List<GameObject>();
 
         // 终点相关
-        maxForce = 3f;
-        minForce = 0.2f;
+        maxForce = 30f;
+        minForce = 5f;
         clickAddForce = 0.5f;
         finalForceRate = 1f;
         targetPosZ = 1000f;
         currentFinalTime = 0f;
         finalTime = 2.5f;
+        moveOver = false;
 
         // 加速相关
         maxSpeedup = 20f;
         minSpeedup = 6f;
         clickAddSpeed = 3f;
-        reduceSpeedup = 2f;
+        reduceSpeedup = 3f;
     }
 
     public void AddPickUp(GameObject pickup) {
@@ -111,5 +113,6 @@ public class PlayerData {
         targetPosZ = 1000f;
         currentFinalTime = 0f;
         isForce = false;
+        moveOver = false;
     }
 }

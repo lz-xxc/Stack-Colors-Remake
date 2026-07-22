@@ -44,7 +44,7 @@ public class PickupData {
         // 生成参数
         maxPickUpRow = 7;
         pickUpPosY = 0.05f;
-        pickupSpace = 0f;
+        pickupSpace = 0.05f;
 
         // 拾取物高度
         smallPickupHeight = 0.1f;

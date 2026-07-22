@@ -73,7 +73,7 @@ public class PlayerView : MonoBehaviour {
     }
 
     /// <summary>
-    /// 更新玩家颜色（包括工具和所有拾取物）
+    /// 更新玩家颜色
     /// </summary>
     public void UpdateColor(Material material) {
         if (playerRenderer != null) {
@@ -182,10 +182,7 @@ public class PlayerView : MonoBehaviour {
         rb.angularDrag = 0.1f;
         rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
         rb.constraints = RigidbodyConstraints.None;
-        ToolMgr.Instance.DelayCallBack(() => {
-            rb.AddForce(force, ForceMode.Impulse);
-
-        }, 0.5f);
+        rb.AddForce(force, ForceMode.Impulse);
     }
 
 
