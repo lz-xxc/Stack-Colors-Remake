@@ -1,0 +1,3 @@
+[submodule ".agents/skills/junior-code-review"]
+	path = .agents/skills/junior-code-review
+	url = git@10.11.0.2:chenjialuo/junior-code-review.git
