@@ -81,6 +81,7 @@ public class Launch : SingletonMonoBehavior<Launch> {
             EditorApplication.isPaused = true;
         }
 
+#endif
         if (BattleMgr.Instance.state == BattleState.Game) {
             PlayerMgr.Instance.OnUpdate();
             EnergyMgr.Instance.OnUpdate();
@@ -98,7 +99,6 @@ public class Launch : SingletonMonoBehavior<Launch> {
                 CameraMgr.Instance.Clear();
             }
         }
-#endif
     }
 
     /// <summary>

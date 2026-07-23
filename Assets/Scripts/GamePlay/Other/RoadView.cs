@@ -48,7 +48,7 @@ public class RoadView : MonoBehaviour {
     private void OnTriggerEnter(Collider other) {
         if (other.gameObject.tag == "Player" && !isTriggered && isSpeedupRoad) {
             if (roadId == RoadMgr.Instance.roadData.speedupRoadStart) {
-                PlayerMgr.Instance.EnterSpeedupMode();
+                Send.SendMsg(SendType.PlayerModeChange, E_PlayerState.Speedup);
             }
 
             if (roadId == RoadMgr.Instance.roadData.finishRoadStart - 1) {

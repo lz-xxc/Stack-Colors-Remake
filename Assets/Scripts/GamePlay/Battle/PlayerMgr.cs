@@ -69,6 +69,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         Send.RegisterMsg(SendType.EnergyEmpty, OnEnergyEmpty);
         Send.RegisterMsg(SendType.UseItemChange, OnPlayerSkinChange);
         Send.RegisterMsg(SendType.CtrlDrag, OnCtrlDrag);
+        Send.RegisterMsg(SendType.PlayerModeChange, OnModeChange);
     }
 
     //反注册消息
@@ -78,6 +79,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         Send.UnregisterMsg(SendType.EnergyEmpty, OnEnergyEmpty);
         Send.UnregisterMsg(SendType.UseItemChange, OnPlayerSkinChange);
         Send.UnregisterMsg(SendType.CtrlDrag, OnCtrlDrag);
+        Send.UnregisterMsg(SendType.PlayerModeChange, OnModeChange);
     }
 
     //开始游戏时调用 
@@ -103,7 +105,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
                 CameraMgr.Instance.FollowObj(player.transform);
                 BattleWindow.Instance.ForceAmount(playerData.CalcSpeedupRate());
                 if (playerData.ReachedTarget(player.transform.position.z)) {
-                    EnterFinishMode();
+                    Send.SendMsg(SendType.PlayerModeChange, E_PlayerState.Finish);
                 }
                 break;
             case (E_PlayerState.Finish):
@@ -130,16 +132,22 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         return keepPickUpTran;
     }
 
-    public void EnterSpeedupMode() {
-        if (PickUpMgr.Instance.pickupData.isEnergyMax) {
-            EnergyMgr.Instance.Energy = 0;
+    private void OnModeChange(object[] _objs) {
+        E_PlayerState state = (E_PlayerState)_objs[0];
+        switch (state) {
+            case (E_PlayerState.Finish):
+                playerData.EnterFinish();
+                break;
+            case (E_PlayerState.Pickup):
+                break;
+            case (E_PlayerState.Speedup):
+                if (PickUpMgr.Instance.pickupData.isEnergyMax) {
+                    EnergyMgr.Instance.Energy = 0;
+                }
+                playerData.EnterSpeedup();
+                BattleWindow.Instance.ShowForceBar();
+                break;
         }
-        playerData.EnterSpeedup();
-        BattleWindow.Instance.ShowForceBar();
-    }
-
-    public void EnterFinishMode() {
-        playerData.EnterFinish();
     }
 
     public void CreatePlayer() {
@@ -203,14 +211,14 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     }
 
     // RemovePickUp
-    public GameObject RemovePickUp() {
+    public PickupInfo RemovePickUp() {
         if (playerData.GetKeepPickups().Count == 0)
             return null;
         if (playerData.GetKeepPickups().Count > 0) {
             ObjectPool.Instance.Recycle(playerData.GetKeepPickups()[playerData.GetKeepPickups().Count - 1], true);
             playerData.RemovePickUp();
             if (playerData.GetKeepPickups().Count > 0)
-                return playerData.GetKeepPickups()[playerData.GetKeepPickups().Count - 1];
+                return playerData.GetKeepPickups()[playerData.GetKeepPickups().Count - 1].GetComponent<PickUpView>().pickupInfo;
             else
                 return null;
         }

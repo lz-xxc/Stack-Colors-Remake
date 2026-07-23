@@ -40,7 +40,8 @@ public class PickupData {
     public float currentPickUpPosY { get; private set; }
 
     //场景中拾取物
-    public List<GameObject> activePickUps { get; private set; } = new List<GameObject>();
+    // public List<GameObject> activePickUps { get; private set; } = new List<GameObject>();
+    public List<PickupInfo> activePickUps { get; private set; } = new List<PickupInfo>();
 
     public PickupData() {
         // 生成参数
@@ -99,30 +100,36 @@ public class PickupData {
         currentPickUpPosY = 0f;
     }
 
-    //回收场景木板并清空列表
-    public void ClearActivePickups() {
-        foreach (GameObject pickup in activePickUps) {
-            if (pickup != null) {
-                ObjectPool.Instance.Recycle(pickup);
-            }
-        }
-
+    //清空列表
+    public void ClearAllPickupInfo() {
         activePickUps.Clear();
     }
 
     //场景木板列表增加
-    public void AddActivePickup(GameObject obj) {
-        activePickUps.Add(obj);
+    public void AddActivePickup(PickupInfo info) {
+        if (!activePickUps.Contains(info))
+            activePickUps.Add(info);
     }
 
     //场景木板列表移除
-    public void RemoveActivePickup(GameObject obj) {
-        activePickUps.Remove(obj);
+    public void RemoveActivePickup(PickupInfo info) {
+        activePickUps.Remove(info);
     }
 
     //场景木板列表移除(下标)
-    public void RemoveActivePickupAt(int index) {
-        activePickUps.RemoveAt(index);
+    public void RemoveActivePickupAt(string id) {
+        var info = activePickUps.Find(p => p.Id == id);
+        if (info != null) {
+            activePickUps.Remove(info);
+        }
+    }
+
+    public PickupInfo GetPickupInfo(string id) {
+        return activePickUps.Find(p => p.Id == id);
+    }
+
+    public List<PickupInfo> GetPickupsByRoadId(int roadId) {
+        return activePickUps.FindAll(p => p.belongRoadId == roadId);
     }
 
     //改变满能量状态

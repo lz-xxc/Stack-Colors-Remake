@@ -23,6 +23,7 @@ public enum SendType {
     PickupColorChange,
     PlayerColorChange,
     EnergyChange,
+    PlayerModeChange,
     //shop
     TryUnLockItem,
     UnLockItemSuccess,

@@ -102,7 +102,6 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
 
     private void OnLevelPass(object[] _objs) {
         int level = (int)_objs[0];
-        Debug.Log(level);
         txtLevel.text = level.ToString();
     }
 }
