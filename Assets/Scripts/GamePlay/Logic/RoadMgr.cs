@@ -38,9 +38,11 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
     }
 
     public void InitMsg() {
+        Send.RegisterMsg(SendType.RecycleRoad, OnRecycleRoad);
     }
 
     public void ClearMsg() {
+        Send.UnregisterMsg(SendType.RecycleRoad, OnRecycleRoad);
     }
 
     public void StartBattle() {
@@ -73,7 +75,7 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
             GameObject speedRoad = ObjectPool.Instance.Get("Road", roadTran.transform, false);
             RoadView roadView = speedRoad.AddMissingComponent<RoadView>();
-            roadView.SetData(roadId, roadData.nextRoadPos, true);
+            roadView.SetData(roadId, roadData.nextRoadPos, true, roadData.deltaRecycleTime);
 
             speedRoad.GetComponent<Renderer>().material.color = Color.gray;
             roadData.nextRoadPos += new Vector3(0, 0, roadData.roadLength);
@@ -103,7 +105,7 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
         RoadView roadView = road.GetComponent<RoadView>();
         if (roadView == null)
             roadView = road.AddComponent<RoadView>();
-        roadView.SetData(roadId, roadData.nextRoadPos, false);
+        roadView.SetData(roadId, roadData.nextRoadPos, false, roadData.deltaRecycleTime);
 
         // ===== 转换器 =====
         if (roadData.IsConverterPos1(roadId)) {
@@ -132,21 +134,20 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
         roadData.nextRoadPos += new Vector3(0, 0, roadData.roadLength);
     }
 
-    public void RecycleRoad(GameObject road, int roadId) {
-        activeRoad.Remove(road);
-        StartCoroutine(DeltaRecycleRoad(road, roadId));
-    }
+    public void OnRecycleRoad(object[] _objs) {
+        GameObject road = (GameObject)_objs[0];
+        float DeltaRecycleTime = (float)_objs[2];
 
-    private IEnumerator DeltaRecycleRoad(GameObject road, int roadId) {
-        yield return new WaitForSeconds(roadData.deltaRecycleTime);
+        ToolMgr.Instance.DelayCallBack(() => {
+            activeRoad.Remove(road);
 
-        Send.SendMsg(SendType.RecycleRoad, roadId);
+            RoadView view = GetComponent<RoadView>();
+            if (view != null) view.ClearData();
+            ObjectPool.Instance.Recycle(road, false);
 
-        RoadView view = road.GetComponent<RoadView>();
-        if (view != null) view.ClearData();
-        ObjectPool.Instance.Recycle(road, false);
+            CreateRoad();
+        }, DeltaRecycleTime);
 
-        CreateRoad();
     }
 
     public float GetTotalDistence() {

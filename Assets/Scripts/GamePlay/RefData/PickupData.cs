@@ -87,7 +87,7 @@ public class PickupData {
 
     //计算拾取后木板位置
     public void CalculatePosY(float height, float lastHeight) {
-        currentPickUpPosY += height / 2 + lastHeight / 2 + spaceOfZ;
+        currentPickUpPosY += height / 2 + lastHeight / 2 + 0.05f;
     }
 
     // 重置方法

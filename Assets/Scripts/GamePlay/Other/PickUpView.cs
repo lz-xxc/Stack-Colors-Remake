@@ -30,6 +30,7 @@ public class PickUpView : MonoBehaviour {
 
     public void SetTransform(Transform parent, float posY) {
         transform.SetParent(parent);
+        this.posY = posY;
         transform.localPosition = new Vector3(0, posY, 0);
     }
 

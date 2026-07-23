@@ -37,11 +37,14 @@ public class ColorChangerMgr : Singleton<ColorChangerMgr> {
     public void RecycleColorChanger(object[] _obj) {
         if (colorChanger == null)
             return;
-        int roadId = (int)_obj[0];
-        ColorChangerView view = colorChanger.GetComponent<ColorChangerView>();
+        int roadId = (int)_obj[1];
+        float deltaRecycleTime = (float)_obj[2];
+        ToolMgr.Instance.DelayCallBack(() => {
+            ColorChangerView view = colorChanger.GetComponent<ColorChangerView>();
 
-        if (view.isBelongRoadId(roadId)) {
-            ObjectPool.Instance.Recycle(colorChanger, false);
-        }
+            if (view.isBelongRoadId(roadId)) {
+                ObjectPool.Instance.Recycle(colorChanger, false);
+            }
+        }, deltaRecycleTime);
     }
 }

@@ -91,14 +91,18 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void RecyclePickUp(object[] _obj) {
-        int roadId = (int)_obj[0];
-        for (int i = pickupData.activePickUps.Count - 1; i >= 0; i--) {
-            GameObject pickup = pickupData.activePickUps[i];
-            if (pickup != null && pickup.GetComponent<PickUpView>().isBelongRoadId(roadId)) {
-                ObjectPool.Instance.Recycle(pickup);
-                pickupData.RemoveActivePickupAt(i);
+        int roadId = (int)_obj[1];
+        float deltaRecycleTime = (float)_obj[2];
+        ToolMgr.Instance.DelayCallBack(() => {
+            for (int i = pickupData.activePickUps.Count - 1; i >= 0; i--) {
+                GameObject pickup = pickupData.activePickUps[i];
+                if (pickup != null && pickup.GetComponent<PickUpView>().isBelongRoadId(roadId)) {
+                    ObjectPool.Instance.Recycle(pickup);
+                    pickupData.RemoveActivePickupAt(i);
+                }
             }
-        }
+        }, deltaRecycleTime);
+
     }
 
     public void OnPickup(object[] _objs) {
@@ -143,10 +147,12 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
 
         if (pickupData.pickUpCount == 0) {
             keepPickUp = PlayerMgr.Instance.KeepPickUpAnchor();
-            pickupData.CalculatePosY(pickUpView.height, pickUpView.height);
+            pickupData.CalculatePosY(pickupData.smallPickupHeight, pickUpView.height);
         }
         else {
             pickupData.CalculatePosY(pickUpView.height, lastView.height);
+            // Debug.Log(pickupData.pickUpCount);
+            // Debug.Log(pickupData.currentPickUpPosY);
         }
         pickUpView.SetTransform(keepPickUp, pickupData.currentPickUpPosY);
         lastPickupObj = obj;

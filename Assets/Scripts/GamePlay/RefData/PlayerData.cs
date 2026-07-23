@@ -87,7 +87,6 @@ public class PlayerData {
     // ============ 构造函数 ============
 
     public PlayerData() {
-        skinName = defaultSkinName;
         colorIndex = defaultColorIndex;
         currentForwSpeed = forwardSpeed;
         targetPosZ = defaultTargetPosZ;
@@ -124,9 +123,9 @@ public class PlayerData {
         return this.colorIndex == colorIndex;
     }
 
-    public float GetToolScale( bool isMax ) {
+    public float GetToolScale(bool isMax) {
         if (isMax) {
-            return skinName == "Player4" ? 5f : 2f;
+            return skinName == "Player4" ? 5f : 10f;
         }
         else {
             return skinName == "Player4" ? 1f : 2f;
@@ -223,7 +222,6 @@ public class PlayerData {
 
     public void Reset() {
         playerState = E_PlayerState.Pickup;
-        skinName = defaultSkinName;
         colorIndex = defaultColorIndex;
 
         currentForwSpeed = 0f;

@@ -59,7 +59,8 @@ public class PlayerView : MonoBehaviour {
         if (playerTransform == null) return;
 
         Vector3 pos = playerTransform.position;
-        pos.x = Mathf.Clamp(x, -roadWidth / 2 - 0.5f, roadWidth / 2 - 0.5f);
+        pos.x += x;
+        pos.x = Mathf.Clamp(pos.x, -roadWidth / 2 - 0.5f, roadWidth / 2 - 0.5f);
         playerTransform.position = pos;
     }
 

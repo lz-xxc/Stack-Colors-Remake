@@ -7,6 +7,7 @@ public class RoadView : MonoBehaviour {
     private bool isSpeedupRoad;
 
     private int roadId;
+    private float deltaRecycleTime;
 
     private Renderer render;
 
@@ -14,10 +15,11 @@ public class RoadView : MonoBehaviour {
         render = GetComponent<Renderer>();
     }
 
-    public void SetData(int id, Vector3 pos, bool isSpeedupRoad) {
+    public void SetData(int id, Vector3 pos, bool isSpeedupRoad, float deltaRecycleTime) {
         roadId = id;
         transform.position = pos;
         this.isSpeedupRoad = isSpeedupRoad;
+        this.deltaRecycleTime = deltaRecycleTime;
 
         isTriggered = false;
         gameObject.SetActive(true);
@@ -35,8 +37,9 @@ public class RoadView : MonoBehaviour {
     private void OnTriggerExit(Collider other) {
         if (other.gameObject.tag == "Player" && !isTriggered && !isSpeedupRoad) {
 
-            if (!isSpeedupRoad)
-                RoadMgr.Instance.RecycleRoad(gameObject, roadId);
+            if (!isSpeedupRoad) {
+                Send.SendMsg(SendType.RecycleRoad, gameObject, roadId, deltaRecycleTime);
+            }
 
             isTriggered = true;
         }

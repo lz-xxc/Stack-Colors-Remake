@@ -28,9 +28,9 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
     //初始化
     public void Init() {
-        playerData = new PlayerData();
         InitMsg();
-        Send.SendMsg(SendType.UseItemChange, playerData.skinName);
+        playerData = new PlayerData();
+        ShopMgr.Instance.UseItemId = ShopMgr.Instance.UseItemId;
     }
 
     //清除数据
@@ -82,7 +82,6 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
     //开始游戏时调用 
     public void StartBattle() {
-        playerData = new PlayerData();
         CreatePlayer();
         pickupTool = player.transform.Find("PickupTool");
         keepPickUpTran = player.transform.Find("KeepPickUp");
