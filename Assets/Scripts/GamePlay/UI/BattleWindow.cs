@@ -13,6 +13,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
     private Image forceFill;
     private Camera uiCamera;
     private GameObject ForceBar;
+    private Text txtLevel;
 
     private GameObject txtGetScorePref;
     public RectTransform floatingTextTran { get; private set; }
@@ -24,6 +25,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
         processFill = gameObject.GetChildControl<Image>("ProcessBar/Fill");
         forceFill = gameObject.GetChildControl<Image>("ForceBar/Fill");
         imgCtrl = gameObject.GetChildControl<EventTrigger>("imgCtrl");
+        txtLevel = txtGold = gameObject.GetChildControl<Text>("imgLevel/txtLevel");
 
         ForceBar = transform.Find("ForceBar").gameObject;
 
@@ -43,6 +45,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
         HideForceBar();
         EnergyMgr.Instance.Energy = 0;
         ScoreMgr.Instance.Score = 0;
+        LevelDataMgr.Instance.SetLevel(LevelDataMgr.Instance.Level);
     }
 
     protected override void OnPreClose() {
@@ -58,12 +61,14 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
     protected override void InitMsg() {
         Send.RegisterMsg(SendType.ScoreChange, OnScoreChange);
         Send.RegisterMsg(SendType.EnergyChange, OnEnergyChange);
+        Send.RegisterMsg(SendType.LevelPass, OnLevelPass);
         imgCtrl.AddListener(EventTriggerType.Drag, OnDrag);
     }
 
     protected override void ClearMsg() {
         Send.UnregisterMsg(SendType.ScoreChange, OnScoreChange);
         Send.UnregisterMsg(SendType.EnergyChange, OnEnergyChange);
+        Send.UnregisterMsg(SendType.LevelPass, OnLevelPass);
     }
 
     public void OnScoreChange(object[] _obj) {
@@ -93,6 +98,12 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
 
     private void OnDrag(BaseEventData arg0) {
         Send.SendMsg(SendType.CtrlDrag, arg0);
+    }
+
+    private void OnLevelPass(object[] _objs) {
+        int level = (int)_objs[0];
+        Debug.Log(level);
+        txtLevel.text = level.ToString();
     }
 }
 
