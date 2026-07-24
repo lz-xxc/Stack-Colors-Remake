@@ -39,10 +39,12 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
     public void InitMsg() {
         Send.RegisterMsg(SendType.RecycleRoad, OnRecycleRoad);
+        Send.RegisterMsg(SendType.EnterSpeedupRoad, OnEnterSpeedup);
     }
 
     public void ClearMsg() {
         Send.UnregisterMsg(SendType.RecycleRoad, OnRecycleRoad);
+        Send.UnregisterMsg(SendType.EnterSpeedupRoad, OnEnterSpeedup);
     }
 
     public void StartBattle() {
@@ -75,7 +77,8 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
             GameObject speedRoad = ObjectPool.Instance.Get("Road", roadTran.transform, false);
             RoadView roadView = speedRoad.AddMissingComponent<RoadView>();
-            roadView.SetData(roadId, roadData.nextRoadPos, true, roadData.deltaRecycleTime);
+            RoadInfo roadInfo = new RoadInfo(roadId, roadData.nextRoadPos, E_RoadType.Speedup);
+            roadView.SetData(roadInfo);
 
             speedRoad.GetComponent<Renderer>().material.color = Color.gray;
             roadData.nextRoadPos += new Vector3(0, 0, roadData.roadLength);
@@ -92,7 +95,8 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
             RateRoad roadView = rateRoad.GetComponent<RateRoad>();
             if (roadView == null)
                 roadView = rateRoad.AddComponent<RateRoad>();
-            roadView.SetData(roadData.rateRoadLogic, roadData.nextRoadPos);
+            RoadInfo roadInfo = new RoadInfo(roadData.rateRoadLogic, roadData.startRate, 0, roadData.nextRoadPos, E_RoadType.Rate);
+            roadView.SetData(roadInfo);
 
             roadData.nextRoadPos += new Vector3(0, 0, roadData.rateRoadLength);
             activeRateRoad.Add(rateRoad);
@@ -102,10 +106,9 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
     private void CreateNormalRoad(int roadId) {
         GameObject road = ObjectPool.Instance.Get("Road", roadTran.transform, false);
-        RoadView roadView = road.GetComponent<RoadView>();
-        if (roadView == null)
-            roadView = road.AddComponent<RoadView>();
-        roadView.SetData(roadId, roadData.nextRoadPos, false, roadData.deltaRecycleTime);
+        RoadView roadView = road.AddMissingComponent<RoadView>();
+        RoadInfo roadInfo = new RoadInfo(roadId, 0, roadData.deltaRecycleTime, roadData.nextRoadPos, E_RoadType.Normal);
+        roadView.SetData(roadInfo);
 
         // ===== 转换器 =====
         if (roadData.IsConverterPos1(roadId)) {
@@ -153,4 +156,64 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
     public float GetTotalDistence() {
         return roadData?.GetTotalDistance() ?? 0;
     }
+
+    private void OnEnterSpeedup(object[] _objs) {
+        int roadId = (int)_objs[0];
+        Vector3 roadPos = (Vector3)_objs[1];
+        if (roadId == roadData.speedupRoadStart) {
+            Send.SendMsg(SendType.PlayerModeChange, E_PlayerState.Speedup);
+        }
+
+        if (roadId == roadData.finishRoadStart - 1) {
+            PlayerMgr.Instance.setTargetZ(roadPos.z);
+        }
+    }
+}
+
+public class RoadInfo {
+    public bool isTriggered { get; private set; } = false;
+    public E_RoadType roadType { get; private set; } = E_RoadType.Normal;
+
+    public int roadId { get; private set; } = 0;
+    public float deltaRecycleTime { get; private set; } = 0;
+
+    public Vector3 roadPos { get; private set; }
+
+    public float rateRoadRate { get; private set; } = 0;
+    public float startRate { get; private set; } = 1;
+    public float rateAdd { get; private set; } = 0.1f;
+
+    public RoadInfo(int roadId, float startRate, float deltaRecycleTime, Vector3 pos, E_RoadType roadType) {
+        this.roadId = roadId;
+        this.deltaRecycleTime = deltaRecycleTime;
+        this.roadType = roadType;
+        isTriggered = false;
+        roadPos = pos;
+        if (roadType == E_RoadType.Rate)
+            this.rateRoadRate = startRate + rateAdd * roadId;
+    }
+
+    public RoadInfo(int roadId, Vector3 pos, E_RoadType roadType) {
+        this.roadId = roadId;
+        this.roadType = roadType;
+        isTriggered = false;
+        roadPos = pos;
+        if (roadType == E_RoadType.Rate)
+            this.rateRoadRate = startRate + rateAdd * roadId;
+        this.deltaRecycleTime = 0;
+    }
+
+    public void RoadTriggered() {
+        isTriggered = true;
+    }
+
+    public void ClearInfo() {
+        isTriggered = false;
+    }
+}
+
+public enum E_RoadType {
+    Normal,
+    Speedup,
+    Rate,
 }

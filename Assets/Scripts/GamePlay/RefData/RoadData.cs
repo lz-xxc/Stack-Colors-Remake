@@ -23,6 +23,8 @@ public class RoadData {
     public int finishRoadStart { get; private set; } = 42;
     public int rateRoadCount { get; private set; } = 60;
 
+    public float startRate { get; private set; } = 1;
+
     // ============ 运行时数据 ============
     public int roadLogic { get; set; }
     public int rateRoadLogic { get; set; }

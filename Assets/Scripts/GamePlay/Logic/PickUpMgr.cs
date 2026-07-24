@@ -20,9 +20,12 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void Clear() {
+        foreach (PickupInfo info in pickupData.activePickUps) {
+            ObjectPool.Instance.Recycle(info.pickupObj, true);
+        }
+
         pickupData?.Reset(); // 使用数据类的Reset
 
-        pickupData.ClearAllPickupInfo();
     }
 
     public void InitMsg() {
@@ -30,6 +33,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         Send.RegisterMsg(SendType.RecycleRoad, RecyclePickUp);
         Send.RegisterMsg(SendType.EnergyMax, OnEnergyMax);
         Send.RegisterMsg(SendType.Pickup, OnPickup);
+        Send.RegisterMsg(SendType.UpdateRate, UpdateRatePosZ);
     }
 
     public void ClearMsg() {
@@ -37,6 +41,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         Send.UnregisterMsg(SendType.RecycleRoad, RecyclePickUp);
         Send.UnregisterMsg(SendType.EnergyMax, OnEnergyMax);
         Send.UnregisterMsg(SendType.Pickup, OnPickup);
+        Send.UnregisterMsg(SendType.UpdateRate, UpdateRatePosZ);
     }
 
     //全边不统一颜色拾取物
@@ -174,8 +179,11 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
                     lastInfo = PlayerMgr.Instance.RemovePickUp();
                 }
                 // 更新位置
-                pickupData.SetCurrentPosY(lastInfo.posY);
                 pickupData.ChangePickupCount(-1);
+                if (lastInfo != null)
+                    pickupData.SetCurrentPosY(lastInfo.posY);
+                else
+                    pickupData.SetCurrentPosY(0);
             }
 
         }
@@ -227,6 +235,12 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
             }
             Send.SendMsg(SendType.PickupColorChange, info.pickupObj, colorIndex);
         }
+    }
+
+    private void UpdateRatePosZ(object[] _objs) {
+        float posZ = (float)_objs[0];
+        Debug.Log(posZ);
+        pickupData.SetLastestRatePosZ(posZ);
     }
 
 }

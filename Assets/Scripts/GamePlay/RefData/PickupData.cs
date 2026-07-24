@@ -98,6 +98,7 @@ public class PickupData {
         largestRatePosZ = 1000f;
         pickUpCount = 0;
         currentPickUpPosY = 0f;
+        ClearAllPickupInfo();
     }
 
     //清空列表

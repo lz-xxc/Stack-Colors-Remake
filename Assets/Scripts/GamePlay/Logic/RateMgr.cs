@@ -19,10 +19,12 @@ public class RateMgr : Singleton<RateMgr> {
 
     public void InitMsg() {
         Send.RegisterMsg(SendType.ShowRate, OnShowRate);
+        Send.RegisterMsg(SendType.TryUpdateRate, SetMaxRate);
     }
 
     public void ClearMsg() {
         Send.UnregisterMsg(SendType.ShowRate, OnShowRate);
+        Send.UnregisterMsg(SendType.TryUpdateRate, SetMaxRate);
     }
 
     private void OnShowRate(object[] _objs) {
@@ -52,11 +54,14 @@ public class RateMgr : Singleton<RateMgr> {
         WindowMgr.Instance.OpenWindow<RateWindow>();
     }
 
-    public bool SerMaxRate(float rate) {
+    public void SetMaxRate(object[] _objs) {
+        float rate = (float)_objs[0];
+        float posZ = (float)_objs[1];
         if (rate > maxRate) {
             maxRate = rate;
-            return true;
+            Debug.Log(maxRate);
+            Send.SendMsg(SendType.UpdateRate, posZ);
         }
-        return false;
     }
+
 }

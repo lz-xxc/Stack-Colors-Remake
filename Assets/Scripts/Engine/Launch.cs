@@ -62,6 +62,7 @@ public class Launch : SingletonMonoBehavior<Launch> {
         SoundMgr.Instance.Init();
         SettingsMgr.Instance.Init();
         LevelDataMgr.Instance.Init();
+        RateMgr.Instance.Init();
         ColorProxy.Instance.Init();
         CameraMgr.Instance.Init();
         PlayerMgr.Instance.Init();
@@ -97,6 +98,7 @@ public class Launch : SingletonMonoBehavior<Launch> {
                 ColorChangerMgr.Instance.Clear();
                 RateMgr.Instance.Clear();
                 CameraMgr.Instance.Clear();
+                RateMgr.Instance.Clear();
             }
         }
     }

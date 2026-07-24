@@ -4,31 +4,24 @@ using UnityEngine;
 using TMPro;
 
 public class RateRoad : MonoBehaviour {
-    private int rateRoadId;
-    private float startRate = 1;
-    private float rate = 0;
-
+    private RoadInfo info;
     private TMP_Text txtRate;
 
     private void Awake() {
         txtRate = gameObject.GetChildControl<TMP_Text>("txtRate");
     }
 
-    public void SetData(int id, Vector3 pos) {
-        rateRoadId = id;
-        transform.position = pos;
-        rate = startRate + 0.1f * rateRoadId;
-        txtRate.text = $"×{rate}";
+    public void SetData(RoadInfo info) {
+        this.info = info;
+        transform.position = info.roadPos;
+        txtRate.text = $"×{info.rateRoadRate}";
         gameObject.SetActive(true);
 
     }
 
     private void OnCollisionEnter(Collision other) {
         if (other.gameObject.tag == "Prop") {
-            if (RateMgr.Instance.SerMaxRate(rate)) {
-                PickUpMgr.Instance.pickupData.SetLastestRatePosZ(other.transform.position.z);
-                PlayerMgr.Instance.ResetCurrentTime();
-            }
+            Send.SendMsg(SendType.TryUpdateRate, info.rateRoadRate, other.transform.position.z);
         }
     }
 }

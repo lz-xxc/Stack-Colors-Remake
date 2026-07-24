@@ -70,6 +70,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         Send.RegisterMsg(SendType.UseItemChange, OnPlayerSkinChange);
         Send.RegisterMsg(SendType.CtrlDrag, OnCtrlDrag);
         Send.RegisterMsg(SendType.PlayerModeChange, OnModeChange);
+        Send.RegisterMsg(SendType.UpdateRate, ResetCurrentTime);
     }
 
     //反注册消息
@@ -80,6 +81,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         Send.UnregisterMsg(SendType.UseItemChange, OnPlayerSkinChange);
         Send.UnregisterMsg(SendType.CtrlDrag, OnCtrlDrag);
         Send.UnregisterMsg(SendType.PlayerModeChange, OnModeChange);
+        Send.UnregisterMsg(SendType.UpdateRate, ResetCurrentTime);
     }
 
     //开始游戏时调用 
@@ -229,7 +231,8 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         LaunchAllPickups();
     }
 
-    public void ResetCurrentTime() {
+    public void ResetCurrentTime(object[] _objs) {
+        Debug.Log(1);
         playerData.ResetFinalTime();
     }
 

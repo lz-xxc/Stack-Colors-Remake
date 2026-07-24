@@ -48,5 +48,9 @@ public enum SendType {
     CtrlDrag,
     //Game
     Pickup,
+    EnterSpeedupRoad,
+    //Rate
+    TryUpdateRate,
+    UpdateRate,
 }
 
