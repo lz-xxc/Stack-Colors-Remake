@@ -9,7 +9,6 @@ public class PickUpView : MonoBehaviour {
 
     public void SetData(PickupInfo info) {
         pickupInfo = info;
-        pickupInfo.SetGameObject(gameObject);
 
         gameObject.SetActive(true);
     }
@@ -45,4 +44,5 @@ public class PickUpView : MonoBehaviour {
             pickupInfo.PickupTriggered();
         }
     }
+
 }

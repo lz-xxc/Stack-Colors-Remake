@@ -9,6 +9,8 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
 
     public PickupData pickupData { get; private set; }
 
+    public Dictionary<PickupInfo, PickUpView> pickupViewS = new Dictionary<PickupInfo, PickUpView>();
+
     public void Init() {
         InitMsg();
 
@@ -20,9 +22,23 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void Clear() {
-        foreach (PickupInfo info in pickupData.activePickUps) {
-            ObjectPool.Instance.Recycle(info.pickupObj, true);
+
+        foreach (PickUpView view in pickupViewS.Values) {
+            if (view == null || view.gameObject == null)
+                continue;
+            GameObject obj = view.gameObject;
+            Rigidbody rb = obj.GetComponent<Rigidbody>();
+            if (rb != null) {
+                rb.isKinematic = true;
+            }
+            obj.transform.rotation = Quaternion.identity;
+            ObjectPool.Instance.Recycle(obj, true);
         }
+
+        lastInfo = null;
+
+        pickupViewS.Clear();
+        keepPickUp = null;
 
         pickupData?.Reset(); // 使用数据类的Reset
 
@@ -122,8 +138,8 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         view.SetData(info);
         view.SetPosition(info.position);
         view.ChangeColor(info.colorIndex);
-        info.SetGameObject(Pickup);
-        Send.SendMsg(SendType.PickupColorChange, info.pickupObj, info.colorIndex);
+        pickupViewS.Add(info, view);
+        Send.SendMsg(SendType.PickupColorChange, view.gameObject, info.colorIndex);
 
         // 设置缩放
         Pickup.transform.localScale = new Vector3(
@@ -141,8 +157,9 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         ToolMgr.Instance.DelayCallBack(() => {
             List<PickupInfo> roadPickups = pickupData.GetPickupsByRoadId(roadId);
             foreach (PickupInfo info in roadPickups) {
-                if (info.pickupObj != null) {
-                    ObjectPool.Instance.Recycle(info.pickupObj);
+                if (info.belongRoadId == roadId && pickupViewS.TryGetValue(info, out PickUpView view)) {
+                    ObjectPool.Instance.Recycle(view.gameObject);
+                    pickupViewS.Remove(info);
                 }
                 pickupData.RemoveActivePickup(info);
             }
@@ -154,7 +171,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         string pickupId = (string)_objs[0];
         int colorIndex = (int)_objs[1];
         PickupInfo info = pickupData.GetPickupInfo(pickupId);
-        PickUpView pickUpView = info.pickupObj?.GetComponent<PickUpView>();
+        PickUpView pickUpView = pickupViewS[info];
 
         if (PlayerMgr.Instance.ColorIndex != colorIndex) {
             HandleWrongColorPickup(info, pickUpView);
@@ -175,7 +192,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
             // 移除最后拾取的拾取物
             if (lastInfo != null) {
                 // 从玩家数据移除
-                if (lastInfo.pickupObj != null) {
+                if (pickupViewS[lastInfo] != null) {
                     lastInfo = PlayerMgr.Instance.RemovePickUp();
                 }
                 // 更新位置
@@ -188,6 +205,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
 
         }
         else {
+            BattleMgr.Instance.CalcOverReward();
             if (GameStateMgr.Instance.curState != GameState.GameOver)
                 GameStateMgr.Instance.SwitchState(GameState.GameOver);
             BattleMgr.Instance.state = BattleState.GameOver;
@@ -196,7 +214,6 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
 
     //碰到相同颜色木板
     private void HandleRightColorPickup(PickupInfo info, PickUpView pickUpView) {
-
         if (pickupData.pickUpCount == 0) {
             keepPickUp = PlayerMgr.Instance.KeepPickUpAnchor();
             pickupData.CalculatePosY(pickupData.smallPickupHeight, info.height);
@@ -207,7 +224,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         pickUpView.SetTransform(keepPickUp, pickupData.currentPickUpPosY);
 
         pickupData.RemoveActivePickup(info);
-        PlayerMgr.Instance.AddPickUp(info.pickupObj);
+        PlayerMgr.Instance.AddPickUp(info);
 
         ScoreMgr.Instance.Score += info.score;
         if (!pickupData.isEnergyMax)
@@ -233,7 +250,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
                 info.belongRoadId >= ColorChangerMgr.Instance.roadId) {
                 colorIndex = ColorChangerMgr.Instance.colorIndex;
             }
-            Send.SendMsg(SendType.PickupColorChange, info.pickupObj, colorIndex);
+            Send.SendMsg(SendType.PickupColorChange, pickupViewS[info].gameObject, colorIndex);
         }
     }
 
@@ -254,8 +271,6 @@ public class PickupInfo {
     public int energy { get; private set; }
     public Vector3 position { get; private set; }
     public float posY { get; private set; }
-
-    public GameObject pickupObj;
 
     public PickupInfo(int belongRoadId, int colorIndex, float height, int score, int energy, Vector3 pos) {
         this.Id = System.Guid.NewGuid().ToString();
@@ -286,11 +301,4 @@ public class PickupInfo {
         posY = newPosY;
     }
 
-    public void SetGameObject(GameObject obj) {
-        pickupObj = obj;
-    }
-
-    public void ClearGameObject() {
-        pickupObj = null;
-    }
 }

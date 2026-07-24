@@ -91,10 +91,10 @@ public class Launch : SingletonMonoBehavior<Launch> {
         if (GameStateMgr.Instance.curState == GameState.GameOver) {
             if (Input.GetMouseButtonDown(0)) {
                 GameStateMgr.Instance.SwitchState(GameState.Main);
+                PickUpMgr.Instance.Clear();
                 PlayerMgr.Instance.Clear();
                 BattleMgr.Instance.Clear();
                 RoadMgr.Instance.Clear();
-                PickUpMgr.Instance.Clear();
                 ColorChangerMgr.Instance.Clear();
                 RateMgr.Instance.Clear();
                 CameraMgr.Instance.Clear();

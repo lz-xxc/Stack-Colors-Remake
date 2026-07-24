@@ -90,6 +90,7 @@ public class BattleMgr : Singleton<BattleMgr> {
     public void CalcOverReward() {
         overScore = (int)(ScoreMgr.Instance.Score * RateMgr.Instance.maxRate);
         overGold = overScore;
+        CurrencyMgr.Instance.Gold += overGold;
     }
 }
 

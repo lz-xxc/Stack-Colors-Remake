@@ -37,18 +37,6 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
 
     //清除数据
     public void Clear() {
-        if (playerData != null && playerData.GetKeepPickups() != null) {
-            foreach (GameObject obj in playerData.GetKeepPickups()) {
-                if (obj != null) {
-                    Rigidbody rb = obj.GetComponent<Rigidbody>();
-                    if (rb != null) {
-                        rb.isKinematic = true;
-                    }
-                    obj.transform.rotation = Quaternion.identity;
-                    ObjectPool.Instance.Recycle(obj, true);
-                }
-            }
-        }
 
         if (player != null) {
             GameObject.Destroy(player);
@@ -63,7 +51,8 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
             playerView.ResetView();
         }
 
-        StopCoroutine(cameraMoveCoro);
+        if (cameraMoveCoro != null)
+            StopCoroutine(cameraMoveCoro);
         cameraMoveCoro = null;
     }
 
@@ -223,7 +212,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     }
 
     // AddPickUp
-    public void AddPickUp(GameObject pickup) {
+    public void AddPickUp(PickupInfo pickup) {
         if (pickup == null) return;
         playerData.AddPickUp(pickup);
     }
@@ -233,10 +222,14 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         if (playerData.GetKeepPickups().Count == 0)
             return null;
         if (playerData.GetKeepPickups().Count > 0) {
-            ObjectPool.Instance.Recycle(playerData.GetKeepPickups()[playerData.GetKeepPickups().Count - 1], true);
+            PickupInfo lastInfo = playerData.GetKeepPickups().Peek();
+            if (PickUpMgr.Instance.pickupViewS.TryGetValue(lastInfo, out PickUpView view)) {
+                ObjectPool.Instance.Recycle(view.gameObject, true);
+                PickUpMgr.Instance.pickupViewS.Remove(lastInfo);
+            }
             playerData.RemovePickUp();
             if (playerData.GetKeepPickups().Count > 0)
-                return playerData.GetKeepPickups()[playerData.GetKeepPickups().Count - 1].GetComponent<PickUpView>().pickupInfo;
+                return playerData.GetKeepPickups().Peek();
             else
                 return null;
         }
@@ -272,9 +265,9 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     /// </summary>
     private void LaunchAllPickups() {
         if (keepPickUpTran == null) return;
-
-        for (int i = 0; i < playerData.GetKeepPickups().Count; i++) {
-            LaunchPickup(playerData.GetKeepPickups()[i], i);
+        int Count = playerData.GetKeepPickups().Count;
+        for (int i = Count - 1; i >= 0; i--) {
+            LaunchPickup(PickUpMgr.Instance.pickupViewS[playerData.GetKeepPickups().Pop()].gameObject, i);
         }
     }
 

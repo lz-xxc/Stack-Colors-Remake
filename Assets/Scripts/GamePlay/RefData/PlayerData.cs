@@ -82,7 +82,7 @@ public class PlayerData {
 
     // ============ 拾取物数据 ============
 
-    private readonly List<GameObject> keepPickUps = new List<GameObject>();
+    private readonly Stack<PickupInfo> keepPickUps = new Stack<PickupInfo>();
 
     /// <summary>当前堆叠拾取物数量</summary>
     public int pickUpCount => keepPickUps.Count;
@@ -97,25 +97,22 @@ public class PlayerData {
 
     // ============ 拾取物方法（仅数据层，不含对象池/View）============
 
-    public IReadOnlyList<GameObject> GetKeepPickups() {
+    public Stack<PickupInfo> GetKeepPickups() {
         return keepPickUps;
     }
 
-    public void AddPickUp(GameObject pickup) {
+    public void AddPickUp(PickupInfo pickup) {
         if (pickup == null) return;
         if (!keepPickUps.Contains(pickup)) {
-            keepPickUps.Add(pickup);
+            keepPickUps.Push(pickup);
         }
     }
 
     /// <summary>移除栈顶拾取物并返回（不回收对象）</summary>
-    public GameObject RemovePickUp() {
-        if (keepPickUps.Count == 0) return null;
+    public void RemovePickUp() {
+        if (keepPickUps.Count != 0)
+            keepPickUps.Pop();
 
-        int lastIndex = keepPickUps.Count - 1;
-        GameObject last = keepPickUps[lastIndex];
-        keepPickUps.RemoveAt(lastIndex);
-        return last;
     }
 
     public void ClearPickUps() {

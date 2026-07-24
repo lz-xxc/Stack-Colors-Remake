@@ -25,7 +25,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
         processFill = gameObject.GetChildControl<Image>("ProcessBar/Fill");
         forceFill = gameObject.GetChildControl<Image>("ForceBar/Fill");
         imgCtrl = gameObject.GetChildControl<EventTrigger>("imgCtrl");
-        txtLevel = txtGold = gameObject.GetChildControl<Text>("imgLevel/txtLevel");
+        txtLevel = gameObject.GetChildControl<Text>("imgLevel/txtLevel");
 
         ForceBar = transform.Find("ForceBar").gameObject;
 
@@ -98,7 +98,6 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
     }
 
     private void OnDrag(BaseEventData arg0) {
-        Debug.Log(1);
         Send.SendMsg(SendType.CtrlDrag, arg0);
     }
 

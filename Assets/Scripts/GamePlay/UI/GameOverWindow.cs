@@ -17,7 +17,6 @@ public class GameOverWindow : BaseWindowWrapper<GameOverWindow> {
     protected override void OnPreOpen() {
         txtScore.text = $"Your Score\n{BattleMgr.Instance.overScore}";
         txtGold.text = $"+{BattleMgr.Instance.overGold}";
-        CurrencyMgr.Instance.Gold += (int)(ScoreMgr.Instance.Score * RateMgr.Instance.maxRate);
     }
 
     protected override void OnOpen() {
