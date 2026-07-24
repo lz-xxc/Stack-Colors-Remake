@@ -239,7 +239,6 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
 
     private void UpdateRatePosZ(object[] _objs) {
         float posZ = (float)_objs[0];
-        Debug.Log(posZ);
         pickupData.SetLastestRatePosZ(posZ);
     }
 

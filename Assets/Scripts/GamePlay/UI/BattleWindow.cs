@@ -53,9 +53,9 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
     }
 
     protected override void OnClose() {
+        base.OnClose();
         energyFill.fillAmount = 0;
         processFill.fillAmount = 0;
-        base.OnClose();
     }
 
     protected override void InitMsg() {
@@ -69,6 +69,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
         Send.UnregisterMsg(SendType.ScoreChange, OnScoreChange);
         Send.UnregisterMsg(SendType.EnergyChange, OnEnergyChange);
         Send.UnregisterMsg(SendType.LevelPass, OnLevelPass);
+        imgCtrl.RemoveListener(EventTriggerType.Drag, OnDrag);
     }
 
     public void OnScoreChange(object[] _obj) {
@@ -97,6 +98,7 @@ public class BattleWindow : BaseWindowWrapper<BattleWindow> {
     }
 
     private void OnDrag(BaseEventData arg0) {
+        Debug.Log(1);
         Send.SendMsg(SendType.CtrlDrag, arg0);
     }
 

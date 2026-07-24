@@ -71,6 +71,9 @@ public class PlayerData {
     /// <summary>是否已触发终点发射</summary>
     public bool isForce { get; set; }
 
+    /// <summary>镜头移动是否开始</summary>
+    public bool cameraMoveStart { get; set; }
+
     /// <summary>镜头移动是否结束</summary>
     public bool moveOver { get; set; }
 
@@ -231,6 +234,7 @@ public class PlayerData {
         finalForceRate = 1f;
         isForce = false;
         moveOver = false;
+        cameraMoveStart = false;
         currentFinalTime = 0f;
 
         ClearPickUps();

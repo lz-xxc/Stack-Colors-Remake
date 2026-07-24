@@ -15,6 +15,8 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     private Transform pickupTool;
     public PlayerData playerData { get; private set; }
 
+    private Coroutine cameraMoveCoro = null;
+
     private PlayerView playerView;
 
     public int ColorIndex {
@@ -60,6 +62,9 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
         if (playerView != null) {
             playerView.ResetView();
         }
+
+        StopCoroutine(cameraMoveCoro);
+        cameraMoveCoro = null;
     }
 
     //注册消息 - 保持不变
@@ -114,10 +119,16 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
                 if (!playerData.isForce) {
                     playerData.BeginFinishLaunch();
                     AddRigidBody();
+                    BattleWindow.Instance.HideForceBar();
                 }
-                ToolMgr.Instance.DelayCallBack(() => {
+
+                if (!playerData.cameraMoveStart && cameraMoveCoro == null) {
+                    cameraMoveCoro = StartCoroutine(IE_DeltaMoveCamera(1f));
+                }
+
+                if (playerData != null && playerData.cameraMoveStart)
                     playerData.moveOver = CameraMgr.Instance.LerpMove();
-                }, 1f);
+
                 playerData.TickFinalTime(Time.deltaTime);
                 if (playerData.IsFinalTimeOver()) {
                     BattleMgr.Instance.CalcOverReward();
@@ -125,10 +136,14 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
                     GameStateMgr.Instance.SwitchState(GameState.GameOver);
                     BattleMgr.Instance.state = BattleState.GameOver;
                 }
-                BattleWindow.Instance.HideForceBar();
                 break;
         }
         AutoMoveForwardSpeed();
+    }
+
+    IEnumerator IE_DeltaMoveCamera(float DeltaTime) {
+        yield return new WaitForSeconds(DeltaTime);
+        playerData.cameraMoveStart = true;
     }
 
     public Transform KeepPickUpAnchor() {
@@ -233,7 +248,6 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
     }
 
     public void ResetCurrentTime(object[] _objs) {
-        Debug.Log(1);
         playerData.ResetFinalTime();
     }
 

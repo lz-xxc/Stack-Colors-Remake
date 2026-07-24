@@ -59,7 +59,6 @@ public class RateMgr : Singleton<RateMgr> {
         float posZ = (float)_objs[1];
         if (rate > maxRate) {
             maxRate = rate;
-            Debug.Log(maxRate);
             Send.SendMsg(SendType.UpdateRate, posZ);
         }
     }

@@ -35,6 +35,7 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
         activeRoad.Clear();
         activeRateRoad.Clear();
         roadData?.Reset();
+        StopAllCoroutines();
     }
 
     public void InitMsg() {
@@ -141,16 +142,19 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
         GameObject road = (GameObject)_objs[0];
         float DeltaRecycleTime = (float)_objs[2];
 
-        ToolMgr.Instance.DelayCallBack(() => {
-            activeRoad.Remove(road);
+        StartCoroutine(IE_DeltaRecycleRoad(road, DeltaRecycleTime));
 
-            RoadView view = GetComponent<RoadView>();
-            if (view != null) view.ClearData();
-            ObjectPool.Instance.Recycle(road, false);
+    }
 
-            CreateRoad();
-        }, DeltaRecycleTime);
+    private IEnumerator IE_DeltaRecycleRoad(GameObject road, float deltaTime) {
+        yield return new WaitForSeconds(deltaTime);
+        activeRoad.Remove(road);
 
+        RoadView view = road.GetComponent<RoadView>();
+        if (view != null) view.ClearData();
+        ObjectPool.Instance.Recycle(road, false);
+
+        CreateRoad();
     }
 
     public float GetTotalDistence() {
