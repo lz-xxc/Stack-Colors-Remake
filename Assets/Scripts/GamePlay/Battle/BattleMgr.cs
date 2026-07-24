@@ -16,6 +16,9 @@ public class BattleMgr : Singleton<BattleMgr> {
     private float floatDuration = 1;
     private float floatDistance = 100;
 
+    public int overScore { get; private set; }
+    public int overGold { get; private set; }
+
     public void Init() {
         InitMsg();
     }
@@ -82,6 +85,11 @@ public class BattleMgr : Singleton<BattleMgr> {
             }
         }
         activeTexts.Clear();
+    }
+
+    public void CalcOverReward() {
+        overScore = (int)(ScoreMgr.Instance.Score * RateMgr.Instance.maxRate);
+        overGold = overScore;
     }
 }
 

@@ -120,6 +120,7 @@ public class PlayerMgr : SingletonMonoBehavior<PlayerMgr> {
                 }, 1f);
                 playerData.TickFinalTime(Time.deltaTime);
                 if (playerData.IsFinalTimeOver()) {
+                    BattleMgr.Instance.CalcOverReward();
                     LevelDataMgr.Instance.LevelPass();
                     GameStateMgr.Instance.SwitchState(GameState.GameOver);
                     BattleMgr.Instance.state = BattleState.GameOver;
