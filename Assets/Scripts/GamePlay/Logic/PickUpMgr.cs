@@ -134,7 +134,6 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         GameObject Pickup = ObjectPool.Instance.Get("PickUp", pickUpTran.transform, false);
         PickUpView view = Pickup.GetComponent<PickUpView>();
         view.SetData(info);
-        view.SetPosition(info.position);
         view.UpdataColor();
         pickupViewS.Add(info, view);
         PickupChangeColor(view.pickupInfo, info.colorIndex);
@@ -178,7 +177,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
             HandleRightColorPickup(info, pickUpView);
         }
 
-
+        info.PickupTriggered();
     }
 
     //碰到不同颜色木板
@@ -219,7 +218,9 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         else {
             pickupData.CalculatePosY(info.height, lastInfo.height);
         }
-        pickUpView.SetTransform(keepPickUp, pickupData.currentPickUpPosY);
+
+        info.UpdatePosY(pickupData.currentPickUpPosY);
+        pickUpView.SetTransform(keepPickUp);
 
         pickupData.RemoveActivePickup(info);
         PlayerMgr.Instance.AddPickUp(info);

@@ -9,22 +9,14 @@ public class PickUpView : MonoBehaviour {
 
     public void SetData(PickupInfo info) {
         pickupInfo = info;
+        transform.position = info.position;
 
         gameObject.SetActive(true);
     }
 
-    public void SetPosition(Vector3 pos) {
-        transform.position = pos;
-        if (pickupInfo != null)
-            pickupInfo.UpdatePosition(pos);
-    }
-
-    public void SetTransform(Transform parent, float posY) {
+    public void SetTransform(Transform parent) {
         transform.SetParent(parent);
-        pickupInfo.UpdatePosY(posY);
-        transform.localPosition = new Vector3(0, posY, 0);
-        if (pickupInfo != null)
-            pickupInfo.UpdatePosY(posY);
+        transform.localPosition = new Vector3(0, pickupInfo.posY, 0);
     }
 
 
@@ -39,7 +31,6 @@ public class PickUpView : MonoBehaviour {
     void OnTriggerEnter(Collider other) {
         if (other.tag == "Player" && !pickupInfo.isTriggered) {
             Send.SendMsg(SendType.Pickup, pickupInfo.Id, pickupInfo.colorIndex);
-            pickupInfo.PickupTriggered();
         }
     }
 
