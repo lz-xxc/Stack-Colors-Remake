@@ -45,7 +45,6 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void InitMsg() {
-        Send.RegisterMsg(SendType.PickupColorChange, PickupChangeColor);
         Send.RegisterMsg(SendType.RecycleRoad, RecyclePickUp);
         Send.RegisterMsg(SendType.EnergyMax, OnEnergyMax);
         Send.RegisterMsg(SendType.Pickup, OnPickup);
@@ -53,7 +52,6 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void ClearMsg() {
-        Send.UnregisterMsg(SendType.PickupColorChange, PickupChangeColor);
         Send.UnregisterMsg(SendType.RecycleRoad, RecyclePickUp);
         Send.UnregisterMsg(SendType.EnergyMax, OnEnergyMax);
         Send.UnregisterMsg(SendType.Pickup, OnPickup);
@@ -139,7 +137,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         view.SetPosition(info.position);
         view.UpdataColor();
         pickupViewS.Add(info, view);
-        Send.SendMsg(SendType.PickupColorChange, view.pickupInfo, info.colorIndex);
+        PickupChangeColor(view.pickupInfo, info.colorIndex);
 
         // 设置缩放
         Pickup.transform.localScale = new Vector3(
@@ -236,9 +234,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         lastInfo = info;
     }
 
-    public void PickupChangeColor(object[] _obj) {
-        PickupInfo pickupInfo = (PickupInfo)_obj[0];
-        int colorIndex = (int)_obj[1];
+    public void PickupChangeColor(PickupInfo pickupInfo, int colorIndex) {
         pickupInfo.ChangeColor(colorIndex);
         pickupViewS[pickupInfo].UpdataColor();
     }
@@ -251,7 +247,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
                 info.belongRoadId >= ColorChangerMgr.Instance.roadId) {
                 colorIndex = ColorChangerMgr.Instance.colorIndex;
             }
-            Send.SendMsg(SendType.PickupColorChange, info, colorIndex);
+            PickupChangeColor(info, colorIndex);
         }
     }
 
