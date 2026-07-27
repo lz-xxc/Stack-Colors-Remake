@@ -137,9 +137,9 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
         PickUpView view = Pickup.GetComponent<PickUpView>();
         view.SetData(info);
         view.SetPosition(info.position);
-        view.ChangeColor(info.colorIndex);
+        view.UpdataColor();
         pickupViewS.Add(info, view);
-        Send.SendMsg(SendType.PickupColorChange, view.gameObject, info.colorIndex);
+        Send.SendMsg(SendType.PickupColorChange, view.pickupInfo, info.colorIndex);
 
         // 设置缩放
         Pickup.transform.localScale = new Vector3(
@@ -237,9 +237,10 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void PickupChangeColor(object[] _obj) {
-        GameObject pickup = (GameObject)_obj[0];
+        PickupInfo pickupInfo = (PickupInfo)_obj[0];
         int colorIndex = (int)_obj[1];
-        pickup.GetComponent<PickUpView>().ChangeColor(colorIndex);
+        pickupInfo.ChangeColor(colorIndex);
+        pickupViewS[pickupInfo].UpdataColor();
     }
 
     private void OnEnergyMax(object[] _obj) {
@@ -250,7 +251,7 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
                 info.belongRoadId >= ColorChangerMgr.Instance.roadId) {
                 colorIndex = ColorChangerMgr.Instance.colorIndex;
             }
-            Send.SendMsg(SendType.PickupColorChange, pickupViewS[info].gameObject, colorIndex);
+            Send.SendMsg(SendType.PickupColorChange, info, colorIndex);
         }
     }
 

@@ -99,6 +99,9 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
             RoadInfo roadInfo = new RoadInfo(roadData.rateRoadLogic, roadData.startRate, 0, roadData.nextRoadPos, E_RoadType.Rate);
             roadView.SetData(roadInfo);
 
+            if (i == 0)
+                Send.SendMsg(SendType.UpdateRate, roadData.nextRoadPos.z);
+
             roadData.nextRoadPos += new Vector3(0, 0, roadData.rateRoadLength);
             activeRateRoad.Add(rateRoad);
             roadData.roadLogic++;

@@ -32,10 +32,8 @@ public class PickUpView : MonoBehaviour {
         return pickupInfo.belongRoadId == roadId;
     }
 
-    public void ChangeColor(int colorIndex) {
-        this.GetComponent<Renderer>().sharedMaterial = ColorProxy.Instance.materials[colorIndex];
-        if (pickupInfo != null)
-            pickupInfo.ChangeColor(colorIndex);
+    public void UpdataColor() {
+        this.GetComponent<Renderer>().sharedMaterial = ColorProxy.Instance.materials[pickupInfo.colorIndex];
     }
 
     void OnTriggerEnter(Collider other) {
