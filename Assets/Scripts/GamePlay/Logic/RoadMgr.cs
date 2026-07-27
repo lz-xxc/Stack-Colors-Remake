@@ -143,7 +143,10 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
 
     public void OnRecycleRoad(object[] _objs) {
         GameObject road = (GameObject)_objs[0];
+        RoadInfo roadInfo = (RoadInfo)_objs[1];
         float DeltaRecycleTime = (float)_objs[2];
+
+        roadInfo.RoadTriggered();
 
         StartCoroutine(IE_DeltaRecycleRoad(road, DeltaRecycleTime));
 
@@ -165,13 +168,16 @@ public class RoadMgr : SingletonMonoBehavior<RoadMgr> {
     }
 
     private void OnEnterSpeedup(object[] _objs) {
-        int roadId = (int)_objs[0];
+        RoadInfo info = (RoadInfo)_objs[0];
         Vector3 roadPos = (Vector3)_objs[1];
-        if (roadId == roadData.speedupRoadStart) {
+
+        info.RoadTriggered();
+
+        if (info.roadId == roadData.speedupRoadStart) {
             Send.SendMsg(SendType.PlayerModeChange, E_PlayerState.Speedup);
         }
 
-        if (roadId == roadData.finishRoadStart - 1) {
+        if (info.roadId == roadData.finishRoadStart - 1) {
             PlayerMgr.Instance.setTargetZ(roadPos.z);
         }
     }
@@ -214,9 +220,6 @@ public class RoadInfo {
         isTriggered = true;
     }
 
-    public void ClearInfo() {
-        isTriggered = false;
-    }
 }
 
 public enum E_RoadType {

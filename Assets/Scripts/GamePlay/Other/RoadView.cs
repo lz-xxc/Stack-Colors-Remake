@@ -20,25 +20,19 @@ public class RoadView : MonoBehaviour {
     }
 
     public void ClearData() {
-        info.ClearInfo();
-
         gameObject.SetActive(false);
         render.material = ColorProxy.Instance.matBlack;
     }
 
     private void OnTriggerExit(Collider other) {
         if (other.gameObject.tag == "Player" && !info.isTriggered && info.roadType == E_RoadType.Normal) {
-            Send.SendMsg(SendType.RecycleRoad, gameObject, info.roadId, info.deltaRecycleTime);
-
-            info.RoadTriggered();
+            Send.SendMsg(SendType.RecycleRoad, gameObject, info, info.deltaRecycleTime);
         }
     }
 
     private void OnTriggerEnter(Collider other) {
         if (other.gameObject.tag == "Player" && !info.isTriggered && info.roadType == E_RoadType.Speedup) {
-            Send.SendMsg(SendType.EnterSpeedupRoad, info.roadId, transform.position);
-
-            info.RoadTriggered();
+            Send.SendMsg(SendType.EnterSpeedupRoad, info, transform.position);
         }
     }
 }

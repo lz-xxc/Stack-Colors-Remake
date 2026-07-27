@@ -149,12 +149,12 @@ public class PickUpMgr : SingletonMonoBehavior<PickUpMgr> {
     }
 
     public void RecyclePickUp(object[] _obj) {
-        int roadId = (int)_obj[1];
+        RoadInfo roadInfo = (RoadInfo)_obj[1];
         float deltaRecycleTime = (float)_obj[2];
         ToolMgr.Instance.DelayCallBack(() => {
-            List<PickupInfo> roadPickups = pickupData.GetPickupsByRoadId(roadId);
+            List<PickupInfo> roadPickups = pickupData.GetPickupsByRoadId(roadInfo.roadId);
             foreach (PickupInfo info in roadPickups) {
-                if (info.belongRoadId == roadId && pickupViewS.TryGetValue(info, out PickUpView view)) {
+                if (info.belongRoadId == roadInfo.roadId && pickupViewS.TryGetValue(info, out PickUpView view)) {
                     ObjectPool.Instance.Recycle(view.gameObject);
                     pickupViewS.Remove(info);
                 }
