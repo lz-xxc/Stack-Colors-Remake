@@ -16,12 +16,17 @@ public class RateRoad : MonoBehaviour {
         transform.position = info.roadPos;
         txtRate.text = $"×{info.rateRoadRate}";
         gameObject.SetActive(true);
-
+        initPosZ();
     }
 
     private void OnCollisionEnter(Collision other) {
         if (other.gameObject.tag == "Prop") {
             Send.SendMsg(SendType.TryUpdateRate, info.rateRoadRate, other.transform.position.z);
         }
+    }
+
+    private void initPosZ() {
+        if (info.rateRoadRate == 1)
+            Send.SendMsg(SendType.UpdateRate, transform.position.z);
     }
 }

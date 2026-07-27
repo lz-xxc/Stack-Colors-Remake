@@ -194,7 +194,7 @@ public class RoadInfo {
         isTriggered = false;
         roadPos = pos;
         if (roadType == E_RoadType.Rate)
-            this.rateRoadRate = startRate + rateAdd * roadId;
+            this.rateRoadRate = startRate + rateAdd * (roadId - 1);
     }
 
     public RoadInfo(int roadId, Vector3 pos, E_RoadType roadType) {
@@ -203,7 +203,7 @@ public class RoadInfo {
         isTriggered = false;
         roadPos = pos;
         if (roadType == E_RoadType.Rate)
-            this.rateRoadRate = startRate + rateAdd * roadId;
+            this.rateRoadRate = startRate + rateAdd * (roadId - 1);
         this.deltaRecycleTime = 0;
     }
 
