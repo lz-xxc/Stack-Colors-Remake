@@ -85,6 +85,8 @@ public class ShopMgr : Singleton<ShopMgr> {
         }
         if (itemInfo.CanUnLock()) {
             itemInfo.UnLock();
+            if (itemInfo.refShop.UnLockType == UnLockType.Gold)
+                CurrencyMgr.Instance.Gold -= itemInfo.refShop.Param;
         }
         else {
             Debug.LogError("解锁条件不满足:" + itemId);
@@ -214,6 +216,7 @@ public class ShopItemInfo {
         // 标记为新物品
         LocalSave.SetBool(NEW_ITEM_KEY + refShop.ItemId, true);
         Refresh();
+
         Send.SendMsg(SendType.UnLockItemSuccess, itemState);
     }
 
